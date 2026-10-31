@@ -13,6 +13,7 @@ Open the local URL printed by Vite. Other commands:
 
 ```sh
 npm run check       # Svelte, accessibility diagnostics, and TypeScript
+npm test            # Motion-preference regression checks
 npm run build       # Production output, including direct route entrypoints
 npm run preview     # Preview the production build
 npm run format      # Format source files
@@ -74,12 +75,15 @@ Current content and assets come from the existing portfolio repository. Nabify a
 
 ## Interaction behavior
 
-- A brief first-visit greeting and curved route transitions; return visits have a shorter entrance.
+- A replayable first-visit greeting, two-stage text entrance, and destination-labeled curved route transitions; return visits have a shorter entrance.
+- A dedicated sticky 3D walkthrough separates and reconnects the CJ assembly as visitors scroll. Orbital elements, pointer drag, and an optional turntable make the geometry explorable.
+- Word-by-word scroll reveals, a typographic marquee, and scroll-linked project images connect the sections.
 - Project previews respond to desktop pointers and remain visible on touch devices.
 - A project image expands into its overview when its starting position is visible; other links use the route curtain.
 - A native modal dialog traps menu focus, supports Escape, and restores focus on close.
-- Reduced motion removes movement and keeps a still rendered signature.
-- The scene renders on demand while assembling or responding, pauses offscreen/in background tabs, and releases GPU resources on unmount. A typographic still remains available if WebGL fails.
+- The visible motion control defaults to the operating-system preference. Visitors can explicitly enable full animation or switch back to reduced motion; the choice is saved on this site. This never changes the device setting. The Replay control repeats the intro. All motion actions and 3D scenes reconfigure when the choice changes.
+- Reduced motion stops movement and keeps a still rendered signature; the 3D walkthrough becomes a shorter, unpinned composition.
+- In full-motion mode the scene animates at a capped frame rate, pauses offscreen/in background tabs, and releases GPU resources on unmount. A typographic still remains available if WebGL fails.
 - Browser history is preserved, and Back restores each page’s previous scroll position.
 
 ## Hosting

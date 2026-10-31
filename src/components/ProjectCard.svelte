@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Project } from '../lib/projects'
-  import { reveal } from '../lib/motion'
+  import { reveal, parallaxImage } from '../lib/motion'
   let { project, index = 0 }: { project: Project; index?: number } = $props()
 </script>
 
@@ -8,6 +8,7 @@
   <a
     href={`/work/${project.slug}`}
     class="project-image"
+    use:parallaxImage
     style={`--project-color:${project.color}`}
     aria-label={`Explore ${project.title}`}
     ><span class="project-number">0{project.order} / SELECTED WORK</span><img

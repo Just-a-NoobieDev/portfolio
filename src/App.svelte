@@ -2,11 +2,22 @@
   import { onMount, tick } from 'svelte'
   import gsap from 'gsap'
   import Signature from './components/Signature.svelte'
+  import KineticStage from './components/KineticStage.svelte'
   import ProjectCard from './components/ProjectCard.svelte'
   import ContactBlock from './components/ContactBlock.svelte'
   import { projects, featuredProjects } from './lib/projects'
   import { profile } from './lib/profile'
-  import { magnetic, reveal, prefersReducedMotion } from './lib/motion'
+  import {
+    magnetic,
+    reveal,
+    wordReveal,
+    prefersReducedMotion,
+  } from './lib/motion'
+  import {
+    setMotionEnabled,
+    MOTION_CHANGE,
+    REPLAY_SIGNATURE,
+  } from './lib/motion-preference'
   let path = $state(location.pathname.replace(/\/$/, '') || '/')
   let filter = $state('All work')
   let menuOpen = $state(false)
@@ -19,6 +30,69 @@
     menuTrigger: HTMLButtonElement
   let activeProject = $state<string | null>(null)
   let time = $state('')
+  let motionEnabled = $state(!prefersReducedMotion())
+  let introWord = $state('Kumusta.')
+  let transitionTitle = $state('Explore.')
+  let scrollRatio = $state(0)
+  let entrance: gsap.core.Timeline | undefined
+  function playIntro(extended = true) {
+    entrance?.kill()
+    if (prefersReducedMotion()) {
+      gsap.set(intro, { display: 'none' })
+      void animatePage()
+      return
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' })
+    introWord = extended ? 'Kumusta.' : `${pageName}.`
+    gsap.set(intro, { display: 'flex', visibility: 'visible', yPercent: 0 })
+    entrance = gsap
+      .timeline({
+        onComplete: () => {
+          intro.style.visibility = 'hidden'
+          void animatePage()
+        },
+      })
+      .fromTo(
+        '.intro-greeting',
+        { y: 45, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' },
+      )
+      .fromTo(
+        '.intro-blue',
+        { scaleX: 0 },
+        { scaleX: 1, duration: extended ? 1.7 : 0.8, ease: 'power2.inOut' },
+        0,
+      )
+    if (extended) {
+      entrance
+        .to('.intro-greeting', { y: -25, opacity: 0, duration: 0.22 }, 0.65)
+        .call(
+          () => {
+            introWord = 'Let’s build.'
+          },
+          [],
+          0.88,
+        )
+        .set('.intro-greeting', { y: 25 }, 0.88)
+        .to('.intro-greeting', { y: 0, opacity: 1, duration: 0.35 }, 0.9)
+    }
+    entrance
+      .to(
+        intro,
+        { yPercent: -110, duration: 1.1, ease: 'power4.inOut' },
+        extended ? 1.45 : 0.4,
+      )
+      .call(
+        () => window.dispatchEvent(new CustomEvent(REPLAY_SIGNATURE)),
+        [],
+        extended ? 1.55 : 0.5,
+      )
+  }
+  function toggleMotion() {
+    setMotionEnabled(!motionEnabled)
+    if (motionEnabled) playIntro(true)
+  }
+
   const scrollPositions = new Map<string, number>()
   const nav = [
     { path: '/', label: 'Home' },
@@ -99,6 +173,10 @@
         menuOpen = false
         document.body.style.overflow = ''
       }
+      transitionTitle =
+        nav.find((item) => item.path === next)?.label ??
+        projects.find((item) => `/work/${item.slug}` === next)?.title ??
+        'Explore'
       gsap.set(curtain, { yPercent: 105, visibility: 'visible' })
       await gsap.to(curtain, {
         yPercent: 0,
@@ -139,7 +217,7 @@
       }
       await gsap.to(curtain, {
         yPercent: -105,
-        duration: prefersReducedMotion() ? 0 : 0.52,
+        duration: prefersReducedMotion() || shared ? 0 : 0.65,
         ease: 'power3.inOut',
       })
       gsap.set(curtain, { visibility: 'hidden' })
@@ -255,24 +333,26 @@
     } catch {
       /* Privacy settings can disable session storage. */
     }
-    const entrance = gsap.timeline({
-      onComplete: () => {
-        intro.style.visibility = 'hidden'
-        void animatePage()
-      },
-    })
-    if (prefersReducedMotion()) entrance.set(intro, { display: 'none' })
-    else
-      entrance
-        .to('.intro-greeting', { opacity: 1, y: 0, duration: 0.4 })
-        .to(intro, {
-          yPercent: -110,
-          duration: 0.95,
-          ease: 'power4.inOut',
-          delay: seen ? 0 : 0.35,
-        })
+    const preferenceChanged = () => {
+      motionEnabled = !prefersReducedMotion()
+      if (!motionEnabled) {
+        entrance?.kill()
+        gsap.set(intro, { display: 'none' })
+        gsap.set('[data-enter]', { clearProps: 'transform,opacity' })
+      }
+    }
+    const onScroll = () => {
+      scrollRatio =
+        window.scrollY /
+        Math.max(1, document.documentElement.scrollHeight - innerHeight)
+    }
+    window.addEventListener(MOTION_CHANGE, preferenceChanged)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    playIntro(!seen)
     return () => {
-      entrance.kill()
+      entrance?.kill()
+      window.removeEventListener(MOTION_CHANGE, preferenceChanged)
+      window.removeEventListener('scroll', onScroll)
       history.scrollRestoration = previousRestoration
       clearInterval(interval)
       document.removeEventListener('click', intercept)
@@ -301,12 +381,39 @@
 <a href="#main" class="skip-link">Skip to content</a>
 <div class="intro" bind:this={intro} aria-hidden="true">
   <span class="intro-mark">CJ</span><span class="intro-greeting"
-    >Kumusta<span>.</span></span
-  ><span class="intro-name">CARL JAMES ROXAS</span>
+    >{introWord}</span
+  >
+  <span class="intro-name"
+    >CARL JAMES ROXAS / THOUGHTFUL CODE. REMARKABLE EXPERIENCES.</span
+  >
   <div class="intro-blue"></div>
 </div>
 <div class="page-curtain" bind:this={curtain} aria-hidden="true">
-  <span>CJ<span class="blue-dot">.</span></span>
+  <span class="curtain-name"
+    >{transitionTitle}<span class="blue-dot">.</span></span
+  >
+</div>
+<div
+  class="reading-progress"
+  style={`transform:scaleX(${scrollRatio})`}
+  aria-hidden="true"
+></div>
+<div class="motion-controls" class:motion-is-off={!motionEnabled}>
+  <button
+    onclick={toggleMotion}
+    aria-pressed={motionEnabled}
+    aria-label={motionEnabled ? 'Reduce animations' : 'Enable full animations'}
+    ><span class="motion-indicator" aria-hidden="true"></span>{motionEnabled
+      ? 'Motion on'
+      : 'Enable animations'}<span aria-hidden="true"
+      >{motionEnabled ? '◉' : '↗'}</span
+    ></button
+  >
+  {#if motionEnabled}<button
+      class="replay-intro"
+      onclick={() => playIntro(true)}
+      aria-label="Replay introduction">Replay ↺</button
+    >{/if}
 </div>
 <div id="top" class:contact-page={path === '/contact'}>
   <header class="site-header">
@@ -317,9 +424,13 @@
       <a
         href="/work"
         aria-current={path.startsWith('/work') ? 'page' : undefined}
-        >Work<span class="nav-dot"></span></a
+        ><span class="rolling"
+          ><span>Work</span><span aria-hidden="true">Work</span></span
+        ><span class="nav-dot"></span></a
       ><a href="/about" aria-current={path === '/about' ? 'page' : undefined}
-        >About<span class="nav-dot"></span></a
+        ><span class="rolling"
+          ><span>About</span><span aria-hidden="true">About</span></span
+        ><span class="nav-dot"></span></a
       ><a href="/contact" use:magnetic class="nav-contact"
         >Let’s talk <span>↗</span></a
       >
@@ -374,7 +485,10 @@
           <span>A LITTLE ABOUT MY APPROACH</span><span>01 / INTRODUCTION</span>
         </div>
         <div class="intro-grid">
-          <h2 use:reveal>
+          <h2
+            use:wordReveal
+            aria-label="Good software starts with understanding."
+          >
             Good software starts<br />with <em>understanding.</em>
           </h2>
           <div class="intro-body" use:reveal={0.1}>
@@ -392,10 +506,21 @@
                 >↗</span
               ></a
             >
+            <a href="#system" class="text-link system-link"
+              >Explore the system <span>↓</span></a
+            >
           </div>
         </div>
       </section>
-      <section class="selected-work section-wrap">
+      <div class="kinetic-marquee" aria-hidden="true">
+        <div>
+          {#each [0, 1, 2, 3] as repeat}<span
+              >INTERFACES <i>✳</i> SYSTEMS <i>✳</i> EXPERIENCES <i>✳</i>
+            </span>{/each}
+        </div>
+      </div>
+      <KineticStage />
+      <section class="selected-work section-wrap" id="selected-work">
         <div class="work-heading" use:reveal>
           <div>
             <div class="eyebrow">02 / SELECTED WORK</div>

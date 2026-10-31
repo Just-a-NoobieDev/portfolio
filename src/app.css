@@ -1932,27 +1932,6 @@ main:focus {
     display: none;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-  *,
-  *:before,
-  *:after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-  .intro {
-    display: none;
-  }
-  .project-image:hover img {
-    transform: none;
-  }
-  .project-row-image {
-    transform: none !important;
-  }
-}
 
 /* Keep decorative transforms inside their layout, including the still 3D fallback. */
 body {
@@ -2031,4 +2010,492 @@ body {
   height: 4px;
   border-radius: 50%;
   background: #a6a79f;
+}
+
+/* Motion is an explicit site preference, with the operating system as default. */
+html[data-motion='reduced'] {
+  scroll-behavior: auto;
+}
+html[data-motion='reduced'] *,
+html[data-motion='reduced'] *::before,
+html[data-motion='reduced'] *::after {
+  animation: none !important;
+  transition-duration: 0.01ms !important;
+}
+html[data-motion='reduced'] .intro {
+  display: none;
+}
+html[data-motion='reduced'] .project-image:hover img,
+html[data-motion='reduced'] .project-row-image {
+  transform: none !important;
+}
+.motion-controls {
+  position: fixed;
+  bottom: 18px;
+  left: 22px;
+  z-index: 30;
+  display: flex;
+  gap: 0;
+  align-items: center;
+  border: 1px solid #72736e45;
+  background: #f4f3eeed;
+  color: var(--ink);
+  border-radius: 30px;
+  box-shadow: 0 4px 22px #0000000b;
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+}
+.motion-controls button {
+  padding: 10px 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font:
+    9px ui-monospace,
+    monospace;
+  letter-spacing: 0.02em;
+  min-height: 36px;
+}
+.motion-controls button:hover {
+  background: #dcded6;
+}
+.motion-controls .replay-intro {
+  border-left: 1px solid #bfc1b7;
+}
+.motion-indicator {
+  width: 5px;
+  height: 5px;
+  background: var(--blue);
+  border-radius: 50%;
+}
+.motion-is-off {
+  border-color: var(--blue);
+}
+.motion-is-off .motion-indicator {
+  background: #8f908a;
+}
+.reading-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--blue);
+  transform-origin: left;
+  z-index: 40;
+  pointer-events: none;
+}
+.signature {
+  user-select: none;
+  cursor: grab;
+}
+.signature.dragging {
+  cursor: grabbing;
+}
+.signature-rotate {
+  position: absolute;
+  bottom: 5%;
+  right: 10%;
+  z-index: 3;
+  font:
+    8px ui-monospace,
+    monospace;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 11px 14px;
+  border: 1px solid #a7a9a1;
+  border-radius: 30px;
+  background: #f4f3eed9;
+  backdrop-filter: blur(4px);
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+.signature-rotate:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.signature-rotate span {
+  font-size: 16px;
+}
+.rolling {
+  display: block;
+  height: 1.35em;
+  overflow: hidden;
+  line-height: 1.35;
+}
+.rolling > span {
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+a:hover .rolling > span,
+a:focus-visible .rolling > span {
+  transform: translateY(-100%);
+}
+.menu-link {
+  position: relative;
+  overflow: hidden;
+}
+.menu-link > span:first-child {
+  transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.menu-link:hover > span:first-child {
+  transform: translateX(24px);
+}
+.page-curtain {
+  box-shadow:
+    0 -12px 0 var(--blue),
+    0 12px 0 var(--blue);
+}
+.page-curtain .curtain-name {
+  font-size: clamp(60px, 10vw, 150px);
+  letter-spacing: -0.07em;
+  font-weight: 450;
+}
+.intro-blue {
+  transform-origin: left;
+  height: 4px;
+  bottom: 13%;
+  left: var(--gutter);
+  width: calc(100% - var(--gutter) * 2);
+}
+.kinetic-marquee {
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  padding: 28px 0 40px;
+}
+.kinetic-marquee > div {
+  display: flex;
+  width: max-content;
+  animation: marquee-travel 38s linear infinite;
+}
+.kinetic-marquee span {
+  font-size: clamp(40px, 5.5vw, 90px);
+  letter-spacing: -0.055em;
+  font-weight: 500;
+  white-space: nowrap;
+  line-height: 1.15;
+  padding-right: 35px;
+}
+.kinetic-marquee i {
+  font-style: normal;
+  color: var(--blue);
+  padding: 0 25px;
+  font-size: 0.75em;
+}
+@keyframes marquee-travel {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.kinetic-stage {
+  height: 210svh;
+  position: relative;
+  background: #121419;
+  color: var(--paper);
+  margin: 0 14px 100px;
+  border-radius: 16px;
+  isolation: isolate;
+}
+.kinetic-sticky {
+  position: sticky;
+  top: 0;
+  height: 100svh;
+  min-height: 620px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: radial-gradient(ellipse at 70% 47%, #25305244 0%, #121419 64%);
+}
+.stage-top {
+  position: absolute;
+  z-index: 5;
+  top: 40px;
+  left: 5%;
+  right: 5%;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  font:
+    9px ui-monospace,
+    monospace;
+  letter-spacing: 0.1em;
+  color: #9b9fa9;
+  border-bottom: 1px solid #424653;
+  padding-bottom: 20px;
+}
+.stage-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  background-image:
+    linear-gradient(#7884a9 1px, transparent 1px),
+    linear-gradient(90deg, #7884a9 1px, transparent 1px);
+  background-size: 80px 80px;
+  mask-image: radial-gradient(ellipse at 70% 50%, black, transparent 70%);
+}
+.stage-scene {
+  position: absolute;
+  width: 74%;
+  height: 88%;
+  right: -5%;
+  top: 6%;
+  z-index: 2;
+}
+.stage-copy {
+  position: absolute;
+  left: 6%;
+  top: 26%;
+  width: 49%;
+  z-index: 3;
+  pointer-events: none;
+}
+.stage-copy .eyebrow {
+  color: #9b9fa9;
+  font-size: 8px;
+}
+.stage-copy h2 {
+  font-size: clamp(48px, 5.8vw, 90px);
+  line-height: 1.05;
+  font-weight: 450;
+  margin-top: 24px;
+}
+.stage-copy h2 em {
+  color: #7184ff;
+}
+.stage-phase {
+  max-width: 290px;
+  margin-top: 35px;
+  min-height: 95px;
+}
+.stage-phase h3 {
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  animation: phase-in 0.6s both;
+}
+.stage-phase p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #9da4b6;
+  margin-top: 12px;
+  animation: phase-in 0.6s 0.08s both;
+}
+@keyframes phase-in {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.stage-bottom {
+  position: absolute;
+  z-index: 5;
+  bottom: 46px;
+  left: 5%;
+  right: 5%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+.stage-steps {
+  display: flex;
+  gap: 30px;
+}
+.stage-steps > span {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: #747c8b;
+  transition: color 0.3s;
+}
+.stage-steps i {
+  font-style: normal;
+  font:
+    8px ui-monospace,
+    monospace;
+  padding-top: 3px;
+}
+.stage-steps > span.active {
+  color: var(--paper);
+}
+.stage-steps > span.active i {
+  color: #7184ff;
+}
+.stage-note {
+  font:
+    8px ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  color: #9b9fa9;
+}
+.stage-progress {
+  height: 3px;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--blue);
+  transform: scaleX(var(--stage-progress, 0));
+  transform-origin: left;
+}
+.project-list:has(.preview-active) .project-row:not(.preview-active) {
+  opacity: 0.45;
+}
+.project-row {
+  transition: opacity 0.4s;
+}
+.project-row-main h2 a {
+  transition:
+    color 0.3s,
+    letter-spacing 0.5s;
+}
+.project-row.preview-active h2 a {
+  letter-spacing: -0.08em;
+}
+html[data-motion='reduced'] .kinetic-stage {
+  height: 85svh;
+  min-height: 620px;
+}
+html[data-motion='reduced'] .kinetic-sticky {
+  position: relative;
+  height: 100%;
+}
+@media (max-width: 760px) {
+  .motion-controls {
+    left: 12px;
+    bottom: 12px;
+  }
+  .motion-controls button {
+    font-size: 8px;
+    min-height: 32px;
+    padding: 8px 10px;
+    gap: 7px;
+  }
+  .signature-rotate {
+    font-size: 7px;
+    right: 10%;
+    bottom: 4%;
+    padding: 8px 12px;
+  }
+  .signature-caption {
+    font-size: 6px;
+  }
+  .kinetic-marquee {
+    padding: 15px 0 25px;
+  }
+  .kinetic-marquee span {
+    font-size: 42px;
+  }
+  .kinetic-stage {
+    height: 185svh;
+    margin: 0 8px 60px;
+    border-radius: 12px;
+  }
+  .kinetic-sticky {
+    height: 100svh;
+    min-height: 680px;
+    border-radius: 12px;
+  }
+  .stage-top {
+    top: 28px;
+    left: 6%;
+    right: 6%;
+    font-size: 6px;
+    padding-bottom: 15px;
+  }
+  .stage-copy {
+    left: 7%;
+    top: 13%;
+    width: 85%;
+  }
+  .stage-copy h2 {
+    font-size: 49px;
+    margin-top: 15px;
+  }
+  .stage-copy .eyebrow {
+    font-size: 7px;
+  }
+  .stage-phase {
+    margin-top: 18px;
+    max-width: 260px;
+  }
+  .stage-phase h3 {
+    font-size: 15px;
+  }
+  .stage-phase p {
+    font-size: 11px;
+    margin-top: 6px;
+  }
+  .stage-scene {
+    width: 120%;
+    height: 65%;
+    right: -10%;
+    top: 35%;
+  }
+  .stage-bottom {
+    bottom: 25px;
+    left: 7%;
+    right: 7%;
+  }
+  .stage-steps {
+    gap: 18px;
+  }
+  .stage-steps > span {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 8px;
+  }
+  .stage-steps i {
+    font-size: 7px;
+  }
+  .stage-note {
+    display: none;
+  }
+  .stage-grid {
+    background-size: 55px 55px;
+  }
+  .intro-name {
+    max-width: 75%;
+    font-size: 7px;
+    line-height: 1.8;
+  }
+  html[data-motion='reduced'] .kinetic-stage {
+    min-height: 720px;
+  }
+}
+
+.motion-controls {
+  left: auto;
+  right: 22px;
+}
+.signature-rotate {
+  bottom: 14%;
+}
+.stage-bottom {
+  bottom: 75px;
+}
+.system-link {
+  margin-top: 24px;
+}
+.reveal-word {
+  will-change: transform, opacity;
+}
+@media (max-width: 760px) {
+  .motion-controls {
+    left: auto;
+    right: 12px;
+  }
+  .signature-rotate {
+    bottom: 9%;
+  }
+  .stage-bottom {
+    bottom: 64px;
+  }
 }

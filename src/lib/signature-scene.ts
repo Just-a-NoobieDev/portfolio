@@ -2,8 +2,10 @@ import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import gsap from 'gsap'
+import { REPLAY_SIGNATURE } from './motion-preference'
 type Options = {
   compact: boolean
+  immersive: boolean
   dark: boolean
   reducedMotion: boolean
   onReady: () => void
@@ -20,7 +22,7 @@ export function createSignature(host: HTMLElement, options: Options) {
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.toneMappingExposure = options.dark ? 1.6 : 1.25
   renderer.shadowMap.enabled = true
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap
+  renderer.shadowMap.type = THREE.PCFShadowMap
   renderer.domElement.setAttribute('aria-hidden', 'true')
   host.appendChild(renderer.domElement)
   const scene = new THREE.Scene()
@@ -34,6 +36,7 @@ export function createSignature(host: HTMLElement, options: Options) {
   room.dispose()
   const key = new THREE.DirectionalLight(0xffffff, 6)
   key.position.set(-3, 6, 5)
+  key.shadow.radius = 4
   key.castShadow = true
   key.shadow.mapSize.set(1024, 1024)
   key.shadow.camera.left = -5
@@ -161,18 +164,45 @@ export function createSignature(host: HTMLElement, options: Options) {
   floor.receiveShadow = true
   scene.add(floor)
   const rest = pieces.map((piece) => piece.position.clone())
-  const assembly = gsap.timeline({ paused: true })
-  if (!options.reducedMotion)
-    pieces.forEach((piece, i) => {
-      const base = rest[i]
-      piece.position.x += i % 2 ? 0.6 : -0.6
-      piece.position.y += i % 2 ? -0.15 : 0.25
-      assembly.to(
-        piece.position,
-        { x: base.x, y: base.y, z: base.z, duration: 1.65, ease: 'power3.out' },
-        0.1 + i * 0.035,
+  const rotations = pieces.map((piece) => piece.rotation.clone())
+  const arrival = { value: options.reducedMotion ? 1 : 0 }
+  const assembly = gsap
+    .timeline({ paused: true })
+    .to(arrival, { value: 1, duration: 2.2, ease: 'power3.out' })
+  const orbit = new THREE.Group()
+  const rings: THREE.Mesh[] = []
+  if (options.immersive) {
+    for (let i = 0; i < 3; i++) {
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(2.55 + i * 0.3, 0.012, 6, 96),
+        new THREE.MeshStandardMaterial({
+          color: i === 1 ? '#2448ff' : '#777f91',
+          metalness: 0.8,
+          roughness: 0.3,
+          transparent: true,
+          opacity: 0.65,
+        }),
       )
-    })
+      ring.rotation.set(Math.PI * (0.28 + i * 0.19), i * 0.8, 0.25)
+      orbit.add(ring)
+      rings.push(ring)
+    }
+    for (let i = 0; i < 12; i++) {
+      const angle = (i / 12) * Math.PI * 2
+      const dot = new THREE.Mesh(
+        new THREE.IcosahedronGeometry(i % 3 === 0 ? 0.09 : 0.04, 1),
+        i % 3 === 0 ? blue : silver,
+      )
+      dot.position.set(
+        Math.cos(angle) * 3,
+        Math.sin(angle) * 2.4,
+        Math.sin(angle * 2) * 0.7,
+      )
+      orbit.add(dot)
+    }
+    scene.add(orbit)
+    camera.position.z = 12
+  }
   let pointerX = 0,
     pointerY = 0,
     visible = true,
@@ -180,12 +210,59 @@ export function createSignature(host: HTMLElement, options: Options) {
     first = true,
     scrollProgress = 0,
     dirty = true
+  let dragging = false,
+    lastX = 0,
+    lastY = 0,
+    dragX = 0,
+    dragY = 0,
+    spinning = false,
+    spinAngle = 0,
+    lastFrame = 0
+  const stage = host.closest<HTMLElement>('.kinetic-stage')
   function onPointer(event: PointerEvent) {
     if (options.reducedMotion || event.pointerType === 'touch') return
     dirty = true
+    if (dragging) {
+      dragY += (event.clientX - lastX) * 0.009
+      dragX = THREE.MathUtils.clamp(
+        dragX + (event.clientY - lastY) * 0.006,
+        -0.5,
+        0.5,
+      )
+      lastX = event.clientX
+      lastY = event.clientY
+    }
     const rect = host.getBoundingClientRect()
-    pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 0.18
-    pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 0.12
+    pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 0.5
+    pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 0.22
+  }
+  function startDrag(event: PointerEvent) {
+    if (
+      options.reducedMotion ||
+      event.pointerType === 'touch' ||
+      (event.target as Element).closest('button')
+    )
+      return
+    dragging = true
+    lastX = event.clientX
+    lastY = event.clientY
+    host.setPointerCapture(event.pointerId)
+    host.classList.add('dragging')
+  }
+  function stopDrag() {
+    dragging = false
+    host.classList.remove('dragging')
+  }
+  function spin(event: Event) {
+    spinning = (event as CustomEvent<boolean>).detail
+    dirty = true
+  }
+  function replay() {
+    if (!options.reducedMotion) {
+      assembly.restart()
+      if (!visible) assembly.pause(0)
+      dirty = true
+    }
   }
   function reset() {
     pointerX = 0
@@ -196,7 +273,14 @@ export function createSignature(host: HTMLElement, options: Options) {
     if (options.reducedMotion || options.compact) return
     dirty = true
     const rect = host.getBoundingClientRect()
-    scrollProgress = Math.max(0, Math.min(1, -rect.top / innerHeight))
+    scrollProgress = stage
+      ? THREE.MathUtils.clamp(
+          -stage.getBoundingClientRect().top /
+            Math.max(1, stage.offsetHeight - innerHeight),
+          0,
+          1,
+        )
+      : THREE.MathUtils.clamp(-rect.top / innerHeight, 0, 1)
   }
   function size() {
     dirty = true
@@ -204,7 +288,13 @@ export function createSignature(host: HTMLElement, options: Options) {
       h = host.clientHeight
     renderer.setSize(w, h)
     camera.aspect = w / h
-    camera.position.z = camera.aspect < 0.9 ? 12 : 10
+    camera.position.z = options.immersive
+      ? camera.aspect < 0.9
+        ? 15
+        : 11.5
+      : camera.aspect < 0.9
+        ? 12
+        : 10
     camera.updateProjectionMatrix()
   }
   const resize = new ResizeObserver(size)
@@ -219,25 +309,57 @@ export function createSignature(host: HTMLElement, options: Options) {
     { rootMargin: '80px' },
   )
   observe.observe(host)
-  const render = () => {
+  const render = (time: number) => {
     if (!visible || document.hidden || lost) return
-    const settling =
-      Math.abs(group.rotation.y - (-0.32 + pointerX + scrollProgress * 0.2)) +
-        Math.abs(group.rotation.x - (-0.1 + pointerY)) >
-      0.0001
-    if (!dirty && !first && !assembly.isActive() && !settling) return
+    if (time - lastFrame < 1000 / 40 && !first) return
+    const dt = Math.min((time - lastFrame) / 1000, 0.05)
+    lastFrame = time
+    if (options.reducedMotion && !dirty && !first) return
     dirty = false
+    const seconds = time / 1000
+    if (spinning && !options.reducedMotion) spinAngle += dt * 0.48
+    const breath = options.reducedMotion ? 0 : Math.sin(seconds * 0.5) * 0.055
+    const explode = options.immersive
+      ? Math.sin(scrollProgress * Math.PI) * 1.8
+      : scrollProgress * 0.55
+    if (options.immersive)
+      camera.position.z = (camera.aspect < 0.9 ? 15 : 11.5) + explode * 1.1
+    const unassembled = 1 - arrival.value
+    pieces.forEach((piece, i) => {
+      const base = rest[i]
+      const direction = i === 0 ? -1 : i === 1 ? 1 : i % 2 ? -0.8 : 0.8
+      piece.position.copy(base)
+      piece.position.x +=
+        direction * (unassembled * 2 + explode * (i < 2 ? 0.75 : 1.1))
+      piece.position.y +=
+        unassembled * (i % 2 ? -0.6 : 0.6) +
+        (i > 5 && !options.reducedMotion
+          ? Math.sin(seconds * 0.75 + i) * 0.12
+          : 0)
+      piece.position.z +=
+        unassembled * (i % 2 ? 0.8 : -0.8) + explode * (i % 2 ? 0.38 : -0.38)
+      piece.rotation.copy(rotations[i])
+      piece.rotation.y += unassembled * (i % 2 ? 0.5 : -0.5)
+      if (i > 5 && !options.reducedMotion) piece.rotation.z += seconds * 0.13
+    })
     group.rotation.y = THREE.MathUtils.lerp(
       group.rotation.y,
-      -0.32 + pointerX + scrollProgress * 0.2,
-      0.06,
+      -0.32 +
+        pointerX +
+        dragY +
+        spinAngle +
+        breath +
+        scrollProgress * (options.immersive ? 0.75 : 0.3),
+      0.07,
     )
     group.rotation.x = THREE.MathUtils.lerp(
       group.rotation.x,
-      -0.1 + pointerY,
-      0.06,
+      -0.1 + pointerY + dragX,
+      0.07,
     )
-    group.position.y = -scrollProgress * 0.22
+    group.position.y = options.immersive ? 0 : -scrollProgress * 0.3
+    if (!options.reducedMotion)
+      orbit.rotation.y = seconds * 0.08 + scrollProgress * 0.5
     renderer.render(scene, camera)
     if (first) {
       first = false
@@ -257,6 +379,11 @@ export function createSignature(host: HTMLElement, options: Options) {
   renderer.domElement.addEventListener('webglcontextlost', onLost)
   renderer.domElement.addEventListener('webglcontextrestored', onRestore)
   renderer.setAnimationLoop(render)
+  host.addEventListener('pointerdown', startDrag)
+  host.addEventListener('pointerup', stopDrag)
+  host.addEventListener('lostpointercapture', stopDrag)
+  host.addEventListener('signature:spin', spin)
+  window.addEventListener(REPLAY_SIGNATURE, replay)
   host.addEventListener('pointermove', onPointer)
   host.addEventListener('pointerleave', reset)
   window.addEventListener('scroll', onScroll, { passive: true })
@@ -265,6 +392,11 @@ export function createSignature(host: HTMLElement, options: Options) {
     resize.disconnect()
     observe.disconnect()
     renderer.setAnimationLoop(null)
+    host.removeEventListener('pointerdown', startDrag)
+    host.removeEventListener('pointerup', stopDrag)
+    host.removeEventListener('lostpointercapture', stopDrag)
+    host.removeEventListener('signature:spin', spin)
+    window.removeEventListener(REPLAY_SIGNATURE, replay)
     host.removeEventListener('pointermove', onPointer)
     host.removeEventListener('pointerleave', reset)
     window.removeEventListener('scroll', onScroll)
