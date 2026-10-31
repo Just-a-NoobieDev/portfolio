@@ -4,19 +4,21 @@ A Svelte 5 + Vite + TypeScript portfolio. GSAP handles entrances, navigation, sc
 
 ## Run locally
 
+This project uses pnpm 10, pinned in `package.json`. Keep `pnpm-lock.yaml` committed when dependencies change.
+
 ```sh
-npm ci
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 Open the local URL printed by Vite. Other commands:
 
 ```sh
-npm run check       # Svelte, accessibility diagnostics, and TypeScript
-npm test            # Motion-preference regression checks
-npm run build       # Production output, including direct route entrypoints
-npm run preview     # Preview the production build
-npm run format      # Format source files
+pnpm check     # Svelte, accessibility diagnostics, and TypeScript
+pnpm test      # Motion-preference regression checks
+pnpm build     # Production output, including direct route entrypoints
+pnpm preview   # Preview the production build
+pnpm format    # Format source files
 ```
 
 The build output is `dist/`. The app can be hosted as a static site. A Vercel configuration and a Netlify/Cloudflare Pages redirect file are included. The build also writes route entrypoints for the four main pages and every project, so direct project links do not depend on a development server.
@@ -25,7 +27,7 @@ The build output is `dist/`. The app can be hosted as a static site. A Vercel co
 
 1. Put a screenshot in `public/images/`, preferably a compressed WebP or JPEG.
 2. Add one entry in `src/lib/projects.ts`. TypeScript checks required fields and accepted statuses.
-3. Run `npm run check` and `npm run build`, then deploy the updated `dist/` output.
+3. Run `pnpm check` and `pnpm build`, then deploy the updated `dist/` output.
 
 ```ts
 {
