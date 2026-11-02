@@ -15,7 +15,7 @@ Open the local URL printed by Vite. Other commands:
 
 ```sh
 pnpm check     # Svelte, accessibility diagnostics, and TypeScript
-pnpm test      # Scroll choreography and automatic-motion regression checks
+pnpm test      # Scroll choreography, automatic motion, and continuation checks
 pnpm build     # Production output, including direct route entrypoints
 pnpm preview   # Preview the production build
 pnpm format    # Format source files
@@ -72,6 +72,9 @@ caseStudy: {
 - Colors, type, layout, and breakpoints: `src/app.css`.
 - Geometry, materials, assembly, and pointer response: `src/lib/signature-scene.ts`.
 - Reusable motion actions: `src/lib/motion.ts`.
+- Drawn introduction: `src/components/SignalTrace.svelte`.
+- Closing bridge and camera choreography: `src/lib/connection-scene.ts`.
+- Next-page order and scroll-intent rules: `src/lib/scroll-continuation.ts`.
 
 Current content and assets come from the existing portfolio repository. Nabify and Smart Bottle Bin retain their old demo URLs in the data but are marked offline after DNS checks; turn them online only when the demos are restored. New projects and current professional details can be added without changing the shared layouts.
 
@@ -81,7 +84,10 @@ Current content and assets come from the existing portfolio repository. Nabify a
 - Destination-labeled route transitions start immediately, take about 0.64 seconds, and retain a queued navigation click. Page content enters while the curtain exits.
 - A twisting chrome ribbon and blue core replace the initial-based sculpture. The object moves automatically and responds to pointer movement and desktop dragging, without instructional UI or rotation buttons.
 - “Under the interface” has four reversible scroll chapters across four viewport heights: a closed ribbon, opened geometry with real project interface panels, a particle constellation with flowing connections, and a reassembled sculpture. The camera and materials change with scroll position.
-- Word-by-word scroll reveals, a typographic marquee, and scroll-linked project images connect the sections.
+- The introduction stays in view while a single SVG stroke grows in direct proportion to scrolling. Its dash length uses the real measured path geometry; a moving tip marks its endpoint. Scrolling backward retracts the line, and no complete guide or parallel paths appear in advance. Desktop and mobile use their own geometry.
+- An original “possibility to connection” closing sequence assembles a silver bridge, carries a blue signal through an opening gateway, and reveals the collaboration invitation. It loads close to the section and pauses offscreen.
+- After the footer, a visible scroll-progress bar continues the journey: Home → Work → About → Contact → Home. Completing the bar with a fresh downward wheel, touch, or keyboard gesture uses the existing route curtain. Pausing, resizing, and restoring history cannot trigger navigation on their own. The destination title is also a normal link.
+- A typographic marquee and scroll-linked project images connect the sections.
 - Project previews respond to desktop pointers and remain visible on touch devices.
 - A project image expands into its overview when its starting position is visible; other links use the route curtain.
 - A native modal dialog traps menu focus, supports Escape, and restores focus on close.

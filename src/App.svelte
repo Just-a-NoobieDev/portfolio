@@ -3,11 +3,14 @@
   import gsap from 'gsap'
   import Signature from './components/Signature.svelte'
   import KineticStage from './components/KineticStage.svelte'
+  import SignalTrace from './components/SignalTrace.svelte'
+  import ConnectionJourney from './components/ConnectionJourney.svelte'
+  import NextChapter from './components/NextChapter.svelte'
   import ProjectCard from './components/ProjectCard.svelte'
   import ContactBlock from './components/ContactBlock.svelte'
   import { projects, featuredProjects } from './lib/projects'
   import { profile } from './lib/profile'
-  import { magnetic, reveal, wordReveal } from './lib/motion'
+  import { magnetic, reveal } from './lib/motion'
   import { REPLAY_SIGNATURE } from './lib/motion-preference'
   let path = $state(location.pathname.replace(/\/$/, '') || '/')
   let filter = $state('All work')
@@ -422,38 +425,7 @@
           >
         </div>
       </section>
-      <section class="introduction section-wrap" id="introduction">
-        <div class="section-eyebrow" use:reveal>
-          <span>A LITTLE ABOUT MY APPROACH</span><span>01 / INTRODUCTION</span>
-        </div>
-        <div class="intro-grid">
-          <h2
-            use:wordReveal
-            aria-label="Good software starts with understanding."
-          >
-            Good software starts<br />with <em>understanding.</em>
-          </h2>
-          <div class="intro-body" use:reveal={0.1}>
-            <p>
-              From the first interaction to the logic behind the scenes, I care
-              about how the pieces fit together.
-            </p>
-            <p class="muted">
-              I’m Carl, a full-stack developer based in the Philippines. I turn
-              ideas into considered web applications, with a particular love for
-              backend development.
-            </p>
-            <a href="/about" class="round-link"
-              ><span>More about me</span><span class="round-arrow" use:magnetic
-                >↗</span
-              ></a
-            >
-            <a href="#system" class="text-link system-link"
-              >Explore the system <span>↓</span></a
-            >
-          </div>
-        </div>
-      </section>
+      <SignalTrace />
       <div class="kinetic-marquee" aria-hidden="true">
         <div>
           {#each [0, 1, 2, 3] as repeat}<span
@@ -501,7 +473,13 @@
           <span aria-hidden="true">↗</span>
         </div>
       </section>
-      <ContactBlock />
+      <div class="journey-link section-wrap">
+        <a href="#connection" class="text-link"
+          >Follow the signal <span>↓</span></a
+        >
+      </div>
+      <ConnectionJourney />
+      <ContactBlock connected />
     {:else if path === '/work'}
       <section class="page-intro section-wrap">
         <div class="eyebrow" data-enter>01 / SELECTED WORK & EXPLORATIONS</div>
@@ -759,6 +737,10 @@
       </section>
       <ContactBlock />
     {/if}
+    {#key path}<NextChapter
+        {path}
+        oncontinue={(href) => void navigate(href)}
+      />{/key}
   </main>
 </div>
 <dialog
