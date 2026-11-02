@@ -2,8 +2,8 @@
   import { onMount, tick } from 'svelte'
   import gsap from 'gsap'
   import Signature from './components/Signature.svelte'
-  import KineticStage from './components/KineticStage.svelte'
   import SignalTrace from './components/SignalTrace.svelte'
+  import ScrollThread from './components/ScrollThread.svelte'
   import ConnectionJourney from './components/ConnectionJourney.svelte'
   import NextChapter from './components/NextChapter.svelte'
   import ProjectCard from './components/ProjectCard.svelte'
@@ -444,60 +444,67 @@
           >
         </div>
       </section>
-      <SignalTrace />
-      <div class="kinetic-marquee" aria-hidden="true">
-        <div>
-          {#each [0, 1, 2, 3] as repeat}<span
-              >INTERFACES <i>✳</i> SYSTEMS <i>✳</i> EXPERIENCES <i>✳</i>
-            </span>{/each}
-        </div>
-      </div>
-      <KineticStage />
-      <section class="selected-work section-wrap" id="selected-work">
-        <div class="work-heading" use:reveal>
-          <div>
-            <div class="eyebrow">02 / SELECTED WORK</div>
-            <h2>Built to <em>solve.</em></h2>
+      <div class="page-line-flow">
+        <ScrollThread variant="page" />
+        <SignalTrace />
+        <div class="work-thread">
+          <div class="kinetic-marquee" aria-hidden="true">
+            <div>
+              {#each [0, 1, 2, 3] as repeat}<span
+                  >INTERFACES <i>✳</i> SYSTEMS <i>✳</i> EXPERIENCES <i>✳</i>
+                </span>{/each}
+            </div>
           </div>
-          <a href="/work" class="text-link"
-            >All work <sup>0{projects.length}</sup> <span>↗</span></a
-          >
+          <section class="selected-work section-wrap" id="selected-work">
+            <div class="work-heading" use:reveal>
+              <div>
+                <div class="eyebrow">02 / SELECTED WORK</div>
+                <h2>Built to <em>solve.</em></h2>
+              </div>
+              <a href="/work" class="text-link"
+                >All work <sup>0{projects.length}</sup> <span>↗</span></a
+              >
+            </div>
+            <div class="project-grid">
+              {#each featuredProjects as project, index (project.slug)}<ProjectCard
+                  {project}
+                  {index}
+                />{/each}
+            </div>
+          </section>
+          <section class="capabilities section-wrap">
+            <div class="section-eyebrow" use:reveal>
+              <span>FROM THE SURFACE TO THE SYSTEM</span><span
+                >03 / WHAT I DO</span
+              >
+            </div>
+            <div class="capability-row" use:reveal>
+              <span class="small-index">01</span>
+              <h3>Interfaces that feel right.</h3>
+              <p>
+                Responsive, considered frontends that make complex things feel
+                simple.
+              </p>
+              <span aria-hidden="true">↗</span>
+            </div>
+            <div class="capability-row" use:reveal>
+              <span class="small-index">02</span>
+              <h3>Systems that hold up.</h3>
+              <p>
+                APIs, databases, and application logic that connect the
+                experience.
+              </p>
+              <span aria-hidden="true">↗</span>
+            </div>
+          </section>
+          <div class="journey-link section-wrap">
+            <a href="#connection" class="text-link"
+              >Follow the signal <span>↓</span></a
+            >
+          </div>
         </div>
-        <div class="project-grid">
-          {#each featuredProjects as project, index (project.slug)}<ProjectCard
-              {project}
-              {index}
-            />{/each}
-        </div>
-      </section>
-      <section class="capabilities section-wrap">
-        <div class="section-eyebrow" use:reveal>
-          <span>FROM THE SURFACE TO THE SYSTEM</span><span>03 / WHAT I DO</span>
-        </div>
-        <div class="capability-row" use:reveal>
-          <span class="small-index">01</span>
-          <h3>Interfaces that feel right.</h3>
-          <p>
-            Responsive, considered frontends that make complex things feel
-            simple.
-          </p>
-          <span aria-hidden="true">↗</span>
-        </div>
-        <div class="capability-row" use:reveal>
-          <span class="small-index">02</span>
-          <h3>Systems that hold up.</h3>
-          <p>
-            APIs, databases, and application logic that connect the experience.
-          </p>
-          <span aria-hidden="true">↗</span>
-        </div>
-      </section>
-      <div class="journey-link section-wrap">
-        <a href="#connection" class="text-link"
-          >Follow the signal <span>↓</span></a
-        >
+        <ConnectionJourney />
       </div>
-      <ConnectionJourney />
       <ContactBlock connected />
     {:else if path === '/work'}
       <section class="page-intro section-wrap">

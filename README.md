@@ -73,7 +73,7 @@ caseStudy: {
 - Colors, type, layout, and breakpoints: `src/app.css`.
 - Geometry, materials, assembly, and pointer response: `src/lib/signature-scene.ts`.
 - Reusable motion actions: `src/lib/motion.ts`.
-- Drawn introduction: `src/components/SignalTrace.svelte`.
+- Line composition and rendering: `src/components/ScrollThread.svelte` and `src/lib/thread-path.ts`.
 - Closing bridge and camera choreography: `src/lib/connection-scene.ts`.
 - Next-page order and scroll-intent rules: `src/lib/scroll-continuation.ts`.
 
@@ -84,8 +84,8 @@ Current content and assets come from the existing portfolio repository. Nabify a
 - Every page load begins with “Kumusta.” followed by “Let’s build.” Returning visits use the same greeting.
 - Destination-labeled route transitions start immediately and take about 1.55 seconds with gentler easing. Navigation clicks made during a transition are queued. The destination label glides in and out, and the page entrance overlaps the curtain reveal.
 - A twisting chrome ribbon and blue core replace the initial-based sculpture. The object moves automatically and responds to pointer movement and desktop dragging, without instructional UI or rotation buttons.
-- “Under the interface” has four reversible scroll chapters across four viewport heights: a closed ribbon, opened geometry with real project interface panels, a particle constellation with flowing connections, and a reassembled sculpture. The camera and materials change with scroll position.
-- The introduction stays in view over 320 viewport-height units while a single SVG stroke grows in direct proportion to scrolling. Its dash length uses the real measured path geometry; a moving tip marks its endpoint. Scrolling backward retracts the line, and no complete guide or parallel paths appear in advance. Desktop and mobile use their own geometry.
+- The earlier “Under the interface” walkthrough has been removed so projects appear sooner and the closing 3D sequence has a distinct purpose.
+- One connected SVG path and one scroll controller carry the line from the naturally scrolling introduction through work, capabilities, and the framed 3D opening. There are no separate section triggers starting later fragments early. Original flowing curves use measured SVG lengths; scrolling backward retracts the stroke. Images naturally cover the line where it passes behind them. The view covers the line as it expands; the contact footer has no decorative line.
 - The original “possibility to connection” closing scene starts in a framed view, expands to fill the viewport, assembles a silver bridge, and carries a blue signal through a gateway into a constellation. Four chapters unfold over 650 viewport-height units on desktop (560 on mobile), with scroll smoothing and overlapping camera movement. It loads close to the section and pauses offscreen.
 - A compact footer row with a scroll-progress bar continues the journey: Home → Work → About → Contact → Home. Once the document reaches its bottom, further wheel, touch, or keyboard input fills the small bar and uses the existing route curtain. It adds no full-screen section or extra scroll runway. Pausing, resizing, and restoring history cannot trigger navigation on their own. The destination title is also a normal link.
 - A typographic marquee and scroll-linked project images connect the sections.

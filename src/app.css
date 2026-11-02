@@ -2489,43 +2489,17 @@ a:focus-visible .rolling > span {
   }
 }
 
-/* One continuous stroke is mapped directly to the visitor's scroll distance. */
+/* The line follows normal page flow and continues behind the next sections. */
 .signal-introduction {
   position: relative;
-  height: 320svh;
+  min-height: 900px;
   isolation: isolate;
 }
 .signal-sticky {
-  position: sticky;
-  top: 0;
-  height: 100svh;
-  min-height: 650px;
-  overflow: hidden;
+  position: relative;
+  min-height: 900px;
   isolation: isolate;
-}
-.signal-trace {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-}
-.signal-trace svg {
-  width: 100%;
-  height: 100%;
-  visibility: hidden;
-}
-.signal-stroke {
-  fill: none;
-  stroke: var(--blue);
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-.signal-tip {
-  fill: var(--paper);
-  stroke: var(--blue);
-  stroke-width: 3;
-  opacity: 0;
+  overflow: clip;
 }
 .signal-content {
   padding-top: 60px;
@@ -2733,10 +2707,10 @@ a:focus-visible .rolling > span {
 }
 @media (max-width: 760px) {
   .signal-introduction {
-    height: 320svh;
+    min-height: 1000px;
   }
   .signal-sticky {
-    min-height: 0;
+    min-height: 1000px;
   }
   .signal-content {
     padding-top: 30px;
@@ -2774,9 +2748,6 @@ a:focus-visible .rolling > span {
   }
   .signal-footnote span:last-child {
     display: none;
-  }
-  .signal-stroke {
-    stroke-width: 4;
   }
   .connection-journey {
     height: 290svh;
@@ -3014,4 +2985,104 @@ a:focus-visible .rolling > span {
   .next-footer-hint {
     display: none;
   }
+}
+
+.scroll-thread {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: clip;
+}
+.scroll-thread svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  visibility: hidden;
+}
+.scroll-thread path {
+  fill: none;
+  stroke: #3655ff;
+  stroke-width: 12px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.scroll-thread.thread-light path {
+  stroke: #839bff;
+  stroke-width: 7px;
+  opacity: 0.5;
+}
+.signal-content {
+  position: relative;
+  z-index: 1;
+}
+.signal-copy-grid h2 {
+  text-shadow: 0 1px var(--paper);
+}
+.work-thread {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+.work-thread > section,
+.work-thread > .journey-link,
+.work-thread > .kinetic-marquee {
+  position: relative;
+  z-index: 1;
+}
+.work-thread .selected-work {
+  padding-bottom: 150px;
+}
+.work-thread .capabilities {
+  padding-bottom: 160px;
+}
+.contact-block.connected {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+.connected .contact-inner {
+  position: relative;
+  z-index: 1;
+}
+.connection-entry-line {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+}
+@media (max-width: 760px) {
+  .scroll-thread path {
+    stroke-width: 5px;
+  }
+  .scroll-thread.thread-light path {
+    stroke-width: 4px;
+  }
+  .work-thread .selected-work {
+    padding-bottom: 100px;
+  }
+  .work-thread .capabilities {
+    padding-bottom: 120px;
+  }
+}
+
+.page-line-flow {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+}
+.page-line-flow > .signal-introduction,
+.page-line-flow > .work-thread {
+  position: relative;
+  z-index: 1;
+}
+
+.page-line-flow > .connection-journey {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+.page-line-flow .connection-sticky {
+  background: transparent;
 }
