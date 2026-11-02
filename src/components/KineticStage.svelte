@@ -1,53 +1,50 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
   import Signature from './Signature.svelte'
-  import { prefersReducedMotion, MOTION_CHANGE } from '../lib/motion-preference'
+  import { sceneStory } from '../lib/scene-story'
   let stage: HTMLElement
   let phase = $state(0)
-  let reduced = $state(prefersReducedMotion())
+  let progress = $state(0)
   const phases = [
     {
-      label: 'The interface.',
-      detail: 'Where an idea becomes something you can use.',
+      title: 'Start with an idea.',
+      detail: 'A single interaction. A world of possibilities.',
+      word: 'Potential.',
+      label: 'The idea',
     },
     {
-      label: 'The connections.',
-      detail: 'APIs and logic give every interaction a purpose.',
+      title: 'Look beneath the surface.',
+      detail: 'Interfaces unfold. Each layer has a purpose.',
+      word: 'Structure.',
+      label: 'The interface',
     },
     {
-      label: 'The whole picture.',
-      detail: 'Thoughtful pieces. One considered experience.',
+      title: 'Follow the connections.',
+      detail: 'Logic, APIs, and data bring the experience to life.',
+      word: 'Connection.',
+      label: 'The system',
+    },
+    {
+      title: 'Make it all feel like one.',
+      detail: 'The complexity comes together. The experience feels simple.',
+      word: 'Experience.',
+      label: 'The whole',
     },
   ]
   onMount(() => {
-    let trigger: ScrollTrigger | undefined
-    function configure() {
-      trigger?.kill()
-      reduced = prefersReducedMotion()
-      phase = 0
-      stage.style.setProperty('--stage-progress', '0')
-      if (!prefersReducedMotion()) {
-        trigger = ScrollTrigger.create({
-          trigger: stage,
-          start: 'top top',
-          end: 'bottom bottom',
-          onUpdate: (self) => {
-            phase = Math.min(2, Math.floor(self.progress * 3))
-            stage.style.setProperty('--stage-progress', String(self.progress))
-          },
-        })
-        ScrollTrigger.refresh()
-      }
-    }
-    configure()
-    window.addEventListener(MOTION_CHANGE, configure)
-    return () => {
-      trigger?.kill()
-      window.removeEventListener(MOTION_CHANGE, configure)
-      gsap.killTweensOf(stage)
-    }
+    const trigger = ScrollTrigger.create({
+      trigger: stage,
+      start: 'top top',
+      end: 'bottom bottom',
+      onUpdate: (self) => {
+        progress = self.progress
+        phase = sceneStory(progress).chapter
+        stage.style.setProperty('--stage-progress', String(progress))
+      },
+    })
+    ScrollTrigger.refresh()
+    return () => trigger.kill()
   })
 </script>
 
@@ -55,33 +52,34 @@
   id="system"
   class="kinetic-stage"
   bind:this={stage}
-  aria-label="An interactive look at how the pieces connect"
+  aria-label="Under the interface: a scroll-driven 3D exploration"
 >
   <div class="kinetic-sticky">
     <div class="stage-top">
-      <span>UNDER THE INTERFACE</span><span
-        >{reduced
-          ? 'STILL VIEW / MOTION IS OFF'
-          : 'SCROLL TO TAKE IT APART ↓'}</span
-      >
+      <span>UNDER THE INTERFACE</span><span>SCROLL TO UNFOLD ↓</span>
     </div>
     <div class="stage-grid" aria-hidden="true"></div>
+    <div class="stage-orbital-text" aria-hidden="true">
+      {phases[phase].word}
+    </div>
     <div class="stage-scene"><Signature immersive dark /></div>
     <div class="stage-copy">
-      <span class="eyebrow">THINKING IN SYSTEMS</span>
-      <h2>Every detail.<br /><em>Connected.</em></h2>
+      <span class="eyebrow">A SMALL EXPLORATION OF HOW I THINK</span>
       <div class="stage-phase" aria-live="off">
-        {#key phase}<h3>{phases[phase].label}</h3>
+        {#key phase}<span class="stage-chapter">0{phase + 1} / 04</span>
+          <h2>{phases[phase].title}</h2>
           <p>{phases[phase].detail}</p>{/key}
       </div>
     </div>
     <div class="stage-bottom">
       <div class="stage-steps">
-        {#each ['Interface', 'API & logic', 'Data & systems'] as step, index}<span
-            class:active={phase === index}><i>0{index + 1}</i>{step}</span
+        {#each phases as item, index}<span class:active={phase === index}
+            ><i>0{index + 1}</i>{item.label}</span
           >{/each}
       </div>
-      <span class="stage-note">BUILT FROM THE INSIDE OUT ↗</span>
+      <span class="stage-note"
+        >{String(Math.round(progress * 100)).padStart(3, '0')} / 100</span
+      >
     </div>
     <div class="stage-progress" aria-hidden="true"></div>
   </div>

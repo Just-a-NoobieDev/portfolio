@@ -1,25 +1,11 @@
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { SplitText } from 'gsap/SplitText'
-import { prefersReducedMotion, MOTION_CHANGE } from './motion-preference'
-export { prefersReducedMotion } from './motion-preference'
 gsap.registerPlugin(ScrollTrigger, SplitText)
 
 function motionAction(node: HTMLElement, setup: () => () => void) {
-  let cleanup: (() => void) | undefined
-  function configure() {
-    cleanup?.()
-    cleanup = undefined
-    if (!prefersReducedMotion()) cleanup = setup()
-  }
-  configure()
-  window.addEventListener(MOTION_CHANGE, configure)
-  return {
-    destroy() {
-      cleanup?.()
-      window.removeEventListener(MOTION_CHANGE, configure)
-    },
-  }
+  const cleanup = setup()
+  return { destroy: cleanup }
 }
 
 export function reveal(node: HTMLElement, delay = 0) {

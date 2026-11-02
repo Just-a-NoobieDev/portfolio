@@ -1,6 +1,6 @@
 # Carl James Roxas — Portfolio
 
-A Svelte 5 + Vite + TypeScript portfolio. GSAP handles entrances, navigation, scroll reveals, magnetic buttons, and project transitions. A dynamically imported Three.js scene builds the CJ signature from geometry; no 3D model file or remote rendering service is needed.
+A Svelte 5 + Vite + TypeScript portfolio. GSAP handles entrances, navigation, scroll reveals, magnetic buttons, and project transitions. A dynamically imported Three.js scene builds a twisting chrome ribbon around an electric blue core. Its scroll story opens the sculpture, reveals real project interfaces, and animates connections before reforming it. No model file or remote rendering service is needed.
 
 ## Run locally
 
@@ -15,7 +15,7 @@ Open the local URL printed by Vite. Other commands:
 
 ```sh
 pnpm check     # Svelte, accessibility diagnostics, and TypeScript
-pnpm test      # Motion-preference regression checks
+pnpm test      # Scroll choreography and automatic-motion regression checks
 pnpm build     # Production output, including direct route entrypoints
 pnpm preview   # Preview the production build
 pnpm format    # Format source files
@@ -49,7 +49,7 @@ The build output is `dist/`. The app can be hosted as a static site. A Vercel co
 }
 ```
 
-The Home gallery, Work gallery, category counts, overview page, and generated route update from this entry. Use a unique lowercase slug with hyphens; the build validates it and checks that the image exists. Missing optional links are hidden. `featured: false` keeps the project on Work only.
+The Home gallery, Work gallery, category counts, overview page, and generated route update from this entry. The first three projects by `order` also supply the floating screenshots in the 3D scroll scene. Use a unique lowercase slug with hyphens; the build validates it and checks that the image exists. Missing optional links are hidden. `featured: false` keeps the project on Work only.
 
 Project overviews contain screenshots and project links today. When a write-up is ready, the same shared layout can render it:
 
@@ -77,15 +77,16 @@ Current content and assets come from the existing portfolio repository. Nabify a
 
 ## Interaction behavior
 
-- A replayable first-visit greeting, two-stage text entrance, and destination-labeled curved route transitions; return visits have a shorter entrance.
-- A dedicated sticky 3D walkthrough separates and reconnects the CJ assembly as visitors scroll. Orbital elements, pointer drag, and an optional turntable make the geometry explorable.
+- Every page load begins with “Kumusta.” followed by “Let’s build.” Returning visits use the same greeting.
+- Destination-labeled route transitions start immediately, take about 0.64 seconds, and retain a queued navigation click. Page content enters while the curtain exits.
+- A twisting chrome ribbon and blue core replace the initial-based sculpture. The object moves automatically and responds to pointer movement and desktop dragging, without instructional UI or rotation buttons.
+- “Under the interface” has four reversible scroll chapters across four viewport heights: a closed ribbon, opened geometry with real project interface panels, a particle constellation with flowing connections, and a reassembled sculpture. The camera and materials change with scroll position.
 - Word-by-word scroll reveals, a typographic marquee, and scroll-linked project images connect the sections.
 - Project previews respond to desktop pointers and remain visible on touch devices.
 - A project image expands into its overview when its starting position is visible; other links use the route curtain.
 - A native modal dialog traps menu focus, supports Escape, and restores focus on close.
-- The visible motion control defaults to the operating-system preference. Visitors can explicitly enable full animation or switch back to reduced motion; the choice is saved on this site. This never changes the device setting. The Replay control repeats the intro. All motion actions and 3D scenes reconfigure when the choice changes.
-- Reduced motion stops movement and keeps a still rendered signature; the 3D walkthrough becomes a shorter, unpinned composition.
-- In full-motion mode the scene animates at a capped frame rate, pauses offscreen/in background tabs, and releases GPU resources on unmount. A typographic still remains available if WebGL fails.
+- Animations run automatically on every visit. There is no motion or replay toolbar; old saved choices do not disable animation. The device settings remain unchanged.
+- Scenes use capped frame rates and device pixel ratios, pause offscreen/in background tabs, and release GPU resources on unmount. A CSS sculpture remains visible if WebGL fails.
 - Browser history is preserved, and Back restores each page’s previous scroll position.
 
 ## Hosting

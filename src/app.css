@@ -109,7 +109,6 @@ main:focus {
 .project-tech,
 .project-number,
 .hero-bottom,
-.signature-caption,
 .archive-hint,
 .archive-note,
 .detail-status,
@@ -380,56 +379,6 @@ main:focus {
 }
 .signature.ready canvas {
   opacity: 1;
-}
-.signature-still {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  inset: 0;
-  transform: rotate(-8deg);
-  font-size: 250px;
-  font-weight: 800;
-  letter-spacing: -0.22em;
-  filter: drop-shadow(10px 22px 12px #1b1b1b25);
-  transition: opacity 0.5s;
-}
-.signature-still span:first-child {
-  color: #303136;
-  text-shadow:
-    3px 3px #68686a,
-    7px 6px #191a1c;
-}
-.signature-still span:last-child {
-  color: var(--blue);
-  text-shadow:
-    4px 5px #1230b7,
-    8px 9px #183195;
-  transform: translate(-15px, 28px);
-}
-.signature.ready .signature-still {
-  opacity: 0;
-}
-.signature-caption {
-  position: absolute;
-  right: 10%;
-  top: 10%;
-  color: #606269;
-  font-size: 8px;
-  z-index: 2;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-.signature-caption i {
-  display: block;
-  width: 30px;
-  height: 1px;
-  background: #969797;
-  transform: rotate(-35deg);
-  transform-origin: right;
 }
 .hero-bottom {
   position: absolute;
@@ -1371,11 +1320,6 @@ main:focus {
   .hero-description {
     font-size: 14px;
   }
-  .signature-caption {
-    right: 5%;
-    font-size: 7px;
-    top: 10%;
-  }
   .hero-location {
     font-size: 7px;
     gap: 15px;
@@ -1492,14 +1436,6 @@ main:focus {
   .hero-art {
     height: 365px;
     margin: 8px -20px -15px;
-  }
-  .signature-caption {
-    top: 12%;
-    right: 10%;
-    font-size: 7px;
-  }
-  .signature-still {
-    font-size: 230px;
   }
   .hero-bottom {
     bottom: 25px;
@@ -2012,68 +1948,6 @@ body {
   background: #a6a79f;
 }
 
-/* Motion is an explicit site preference, with the operating system as default. */
-html[data-motion='reduced'] {
-  scroll-behavior: auto;
-}
-html[data-motion='reduced'] *,
-html[data-motion='reduced'] *::before,
-html[data-motion='reduced'] *::after {
-  animation: none !important;
-  transition-duration: 0.01ms !important;
-}
-html[data-motion='reduced'] .intro {
-  display: none;
-}
-html[data-motion='reduced'] .project-image:hover img,
-html[data-motion='reduced'] .project-row-image {
-  transform: none !important;
-}
-.motion-controls {
-  position: fixed;
-  bottom: 18px;
-  left: 22px;
-  z-index: 30;
-  display: flex;
-  gap: 0;
-  align-items: center;
-  border: 1px solid #72736e45;
-  background: #f4f3eeed;
-  color: var(--ink);
-  border-radius: 30px;
-  box-shadow: 0 4px 22px #0000000b;
-  backdrop-filter: blur(12px);
-  overflow: hidden;
-}
-.motion-controls button {
-  padding: 10px 14px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font:
-    9px ui-monospace,
-    monospace;
-  letter-spacing: 0.02em;
-  min-height: 36px;
-}
-.motion-controls button:hover {
-  background: #dcded6;
-}
-.motion-controls .replay-intro {
-  border-left: 1px solid #bfc1b7;
-}
-.motion-indicator {
-  width: 5px;
-  height: 5px;
-  background: var(--blue);
-  border-radius: 50%;
-}
-.motion-is-off {
-  border-color: var(--blue);
-}
-.motion-is-off .motion-indicator {
-  background: #8f908a;
-}
 .reading-progress {
   position: fixed;
   top: 0;
@@ -2091,35 +1965,6 @@ html[data-motion='reduced'] .project-row-image {
 }
 .signature.dragging {
   cursor: grabbing;
-}
-.signature-rotate {
-  position: absolute;
-  bottom: 5%;
-  right: 10%;
-  z-index: 3;
-  font:
-    8px ui-monospace,
-    monospace;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 11px 14px;
-  border: 1px solid #a7a9a1;
-  border-radius: 30px;
-  background: #f4f3eed9;
-  backdrop-filter: blur(4px);
-  transition:
-    background 0.2s,
-    color 0.2s;
-}
-.signature-rotate:hover {
-  background: var(--ink);
-  color: var(--paper);
-}
-.signature-rotate span {
-  font-size: 16px;
 }
 .rolling {
   display: block;
@@ -2192,7 +2037,7 @@ a:focus-visible .rolling > span {
   }
 }
 .kinetic-stage {
-  height: 210svh;
+  height: 400svh;
   position: relative;
   background: #121419;
   color: var(--paper);
@@ -2359,34 +2204,7 @@ a:focus-visible .rolling > span {
 .project-row.preview-active h2 a {
   letter-spacing: -0.08em;
 }
-html[data-motion='reduced'] .kinetic-stage {
-  height: 85svh;
-  min-height: 620px;
-}
-html[data-motion='reduced'] .kinetic-sticky {
-  position: relative;
-  height: 100%;
-}
 @media (max-width: 760px) {
-  .motion-controls {
-    left: 12px;
-    bottom: 12px;
-  }
-  .motion-controls button {
-    font-size: 8px;
-    min-height: 32px;
-    padding: 8px 10px;
-    gap: 7px;
-  }
-  .signature-rotate {
-    font-size: 7px;
-    right: 10%;
-    bottom: 4%;
-    padding: 8px 12px;
-  }
-  .signature-caption {
-    font-size: 6px;
-  }
   .kinetic-marquee {
     padding: 15px 0 25px;
   }
@@ -2394,7 +2212,7 @@ html[data-motion='reduced'] .kinetic-sticky {
     font-size: 42px;
   }
   .kinetic-stage {
-    height: 185svh;
+    height: 380svh;
     margin: 0 8px 60px;
     border-radius: 12px;
   }
@@ -2466,17 +2284,6 @@ html[data-motion='reduced'] .kinetic-sticky {
     font-size: 7px;
     line-height: 1.8;
   }
-  html[data-motion='reduced'] .kinetic-stage {
-    min-height: 720px;
-  }
-}
-
-.motion-controls {
-  left: auto;
-  right: 22px;
-}
-.signature-rotate {
-  bottom: 14%;
 }
 .stage-bottom {
   bottom: 75px;
@@ -2488,14 +2295,198 @@ html[data-motion='reduced'] .kinetic-sticky {
   will-change: transform, opacity;
 }
 @media (max-width: 760px) {
-  .motion-controls {
-    left: auto;
-    right: 12px;
-  }
-  .signature-rotate {
-    bottom: 9%;
-  }
   .stage-bottom {
     bottom: 64px;
+  }
+}
+
+/* One continuous sculpture, from possibility to a working system. */
+.signature-fallback {
+  position: absolute;
+  inset: 15%;
+  display: grid;
+  place-items: center;
+  transition: opacity 0.4s;
+}
+.signature-fallback i {
+  width: 75%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 28px solid #a4adbe;
+  border-top-color: #2448ff;
+  box-shadow:
+    inset 8px 8px 15px #20212366,
+    8px 20px 35px #20212322;
+  transform: rotate(-30deg) skew(-12deg);
+}
+.signature-fallback b {
+  position: absolute;
+  width: 20%;
+  aspect-ratio: 1;
+  background: radial-gradient(circle at 30% 25%, #9cacff, #2448ff 45%, #10215d);
+  border-radius: 50%;
+}
+.signature.ready .signature-fallback {
+  opacity: 0;
+}
+.signature.compact {
+  cursor: default;
+}
+.kinetic-sticky {
+  background: radial-gradient(ellipse at 65% 50%, #1f2a4e 0%, #0e111a 60%);
+}
+.stage-scene {
+  width: 78%;
+  height: 100%;
+  top: 0;
+  right: -2%;
+}
+.stage-copy {
+  top: 32%;
+  left: 5%;
+  width: 31%;
+}
+.stage-copy h2 {
+  font-size: clamp(34px, 4vw, 64px);
+  line-height: 1.06;
+  margin-top: 20px;
+  max-width: 380px;
+  animation: phase-in 0.45s both;
+}
+.stage-phase {
+  margin-top: 30px;
+  max-width: none;
+}
+.stage-chapter {
+  display: block;
+  font:
+    10px ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+  color: #8499ff;
+}
+.stage-phase p {
+  font-size: 13px;
+  max-width: 235px;
+  margin-top: 20px;
+  color: #aeb7cb;
+}
+.stage-orbital-text {
+  position: absolute;
+  top: 12%;
+  left: 5%;
+  right: 0;
+  font-size: clamp(80px, 15vw, 240px);
+  letter-spacing: -0.075em;
+  line-height: 1;
+  font-weight: 500;
+  color: transparent;
+  -webkit-text-stroke: 1px #9aaee51d;
+  pointer-events: none;
+  transform: translateX(calc(var(--stage-progress, 0) * -4%));
+}
+.stage-bottom {
+  bottom: 35px;
+}
+.stage-grid {
+  opacity: 0.055;
+  background-size: 100px 100px;
+}
+.stage-steps {
+  gap: 24px;
+}
+.stage-steps > span {
+  font-size: 10px;
+}
+.stage-steps > span.active::after {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #7184ff;
+  margin-top: 4px;
+}
+@media (max-width: 1100px) and (min-width: 761px) {
+  .stage-copy {
+    width: 32%;
+  }
+  .stage-scene {
+    right: -12%;
+    width: 86%;
+  }
+}
+@media (max-width: 760px) {
+  .kinetic-sticky {
+    min-height: 0;
+    height: 100svh;
+  }
+  .stage-top {
+    top: 22px;
+  }
+  .stage-copy {
+    top: 13%;
+    left: 7%;
+    width: 86%;
+  }
+  .stage-copy .eyebrow {
+    font-size: 6px;
+  }
+  .stage-phase {
+    margin-top: 16px;
+  }
+  .stage-copy h2 {
+    font-size: 34px;
+    max-width: 280px;
+    margin-top: 12px;
+  }
+  .stage-phase p {
+    font-size: 11px;
+    max-width: 240px;
+    margin-top: 10px;
+  }
+  .stage-chapter {
+    font-size: 8px;
+  }
+  .stage-scene {
+    width: 135%;
+    height: 69%;
+    top: 30%;
+    right: -17.5%;
+  }
+  .stage-orbital-text {
+    top: 48%;
+    left: 3%;
+    font-size: 85px;
+  }
+  .stage-bottom {
+    bottom: 25px;
+  }
+  .stage-steps {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .stage-steps > span {
+    font-size: 8px;
+  }
+  .stage-steps > span.active::after {
+    display: none;
+  }
+}
+@media (max-height: 600px) and (min-width: 761px) {
+  .kinetic-sticky {
+    min-height: 0;
+  }
+  .stage-copy {
+    top: 26%;
+  }
+  .stage-copy h2 {
+    font-size: 38px;
+  }
+  .stage-top {
+    top: 20px;
+  }
+  .stage-bottom {
+    bottom: 20px;
   }
 }

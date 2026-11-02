@@ -7,22 +7,13 @@
   import ContactBlock from './components/ContactBlock.svelte'
   import { projects, featuredProjects } from './lib/projects'
   import { profile } from './lib/profile'
-  import {
-    magnetic,
-    reveal,
-    wordReveal,
-    prefersReducedMotion,
-  } from './lib/motion'
-  import {
-    setMotionEnabled,
-    MOTION_CHANGE,
-    REPLAY_SIGNATURE,
-  } from './lib/motion-preference'
+  import { magnetic, reveal, wordReveal } from './lib/motion'
+  import { REPLAY_SIGNATURE } from './lib/motion-preference'
   let path = $state(location.pathname.replace(/\/$/, '') || '/')
   let filter = $state('All work')
   let menuOpen = $state(false)
   let transitionBusy = false
-  let queuedBack: string | undefined
+  let queuedNavigation: { next: string; push: boolean } | undefined
   let intro: HTMLDivElement,
     curtain: HTMLDivElement,
     menu: HTMLDialogElement,
@@ -30,20 +21,14 @@
     menuTrigger: HTMLButtonElement
   let activeProject = $state<string | null>(null)
   let time = $state('')
-  let motionEnabled = $state(!prefersReducedMotion())
   let introWord = $state('Kumusta.')
   let transitionTitle = $state('Explore.')
   let scrollRatio = $state(0)
   let entrance: gsap.core.Timeline | undefined
-  function playIntro(extended = true) {
+  function playIntro() {
     entrance?.kill()
-    if (prefersReducedMotion()) {
-      gsap.set(intro, { display: 'none' })
-      void animatePage()
-      return
-    }
     window.scrollTo({ top: 0, behavior: 'instant' })
-    introWord = extended ? 'Kumusta.' : `${pageName}.`
+    introWord = 'Kumusta.'
     gsap.set(intro, { display: 'flex', visibility: 'visible', yPercent: 0 })
     entrance = gsap
       .timeline({
@@ -60,39 +45,28 @@
       .fromTo(
         '.intro-blue',
         { scaleX: 0 },
-        { scaleX: 1, duration: extended ? 1.7 : 0.8, ease: 'power2.inOut' },
+        { scaleX: 1, duration: 1.45, ease: 'power2.inOut' },
         0,
       )
-    if (extended) {
-      entrance
-        .to('.intro-greeting', { y: -25, opacity: 0, duration: 0.22 }, 0.65)
-        .call(
-          () => {
-            introWord = 'Let’s build.'
-          },
-          [],
-          0.88,
-        )
-        .set('.intro-greeting', { y: 25 }, 0.88)
-        .to('.intro-greeting', { y: 0, opacity: 1, duration: 0.35 }, 0.9)
-    }
     entrance
-      .to(
-        intro,
-        { yPercent: -110, duration: 1.1, ease: 'power4.inOut' },
-        extended ? 1.45 : 0.4,
+      .to('.intro-greeting', { y: -25, opacity: 0, duration: 0.22 }, 0.65)
+      .call(
+        () => {
+          introWord = 'Let’s build.'
+        },
+        [],
+        0.88,
       )
+      .set('.intro-greeting', { y: 25 }, 0.88)
+      .to('.intro-greeting', { y: 0, opacity: 1, duration: 0.35 }, 0.9)
+    entrance
+      .to(intro, { yPercent: -110, duration: 0.85, ease: 'power4.inOut' }, 1.35)
       .call(
         () => window.dispatchEvent(new CustomEvent(REPLAY_SIGNATURE)),
         [],
-        extended ? 1.55 : 0.5,
+        1.45,
       )
   }
-  function toggleMotion() {
-    setMotionEnabled(!motionEnabled)
-    if (motionEnabled) playIntro(true)
-  }
-
   const scrollPositions = new Map<string, number>()
   const nav = [
     { path: '/', label: 'Home' },
@@ -115,19 +89,19 @@
   )
   async function animatePage() {
     await tick()
-    if (!prefersReducedMotion())
-      gsap.fromTo(
-        '[data-enter]',
-        { y: 45, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 0.9,
-          stagger: 0.075,
-          ease: 'power3.out',
-          clearProps: 'all',
-        },
-      )
+    gsap.killTweensOf('[data-enter]')
+    gsap.fromTo(
+      '[data-enter]',
+      { y: 45, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.65,
+        stagger: 0.045,
+        ease: 'power3.out',
+        clearProps: 'all',
+      },
+    )
   }
   async function navigate(
     next: string,
@@ -135,12 +109,12 @@
     source?: HTMLImageElement,
   ) {
     next = next.replace(/\/$/, '') || '/'
-    if (next === path) {
-      if (menuOpen) await closeMenu()
+    if (transitionBusy) {
+      queuedNavigation = { next, push }
       return
     }
-    if (transitionBusy) {
-      if (!push) queuedBack = next
+    if (next === path) {
+      if (menuOpen) await closeMenu()
       return
     }
     transitionBusy = true
@@ -149,7 +123,7 @@
     scrollPositions.set(path, window.scrollY)
     let shared: HTMLDivElement | undefined
     try {
-      if (source && next.startsWith('/work/') && !prefersReducedMotion()) {
+      if (source && next.startsWith('/work/')) {
         const from = source.getBoundingClientRect()
         if (from.width > 0 && from.bottom > 0 && from.top < innerHeight) {
           shared = document.createElement('div')
@@ -180,7 +154,7 @@
       gsap.set(curtain, { yPercent: 105, visibility: 'visible' })
       await gsap.to(curtain, {
         yPercent: 0,
-        duration: prefersReducedMotion() ? 0 : shared ? 0.25 : 0.42,
+        duration: 0.24,
         ease: 'power3.inOut',
       })
       if (push) history.pushState({}, '', next)
@@ -190,7 +164,6 @@
         top: restoreScroll ? (scrollPositions.get(next) ?? 0) : 0,
         behavior: 'instant',
       })
-      await animatePage()
       document
         .querySelector<HTMLElement>('#page-title')
         ?.focus({ preventScroll: true })
@@ -201,7 +174,7 @@
           const to = target.getBoundingClientRect()
           gsap.to(curtain, {
             yPercent: -105,
-            duration: 0.55,
+            duration: 0.4,
             ease: 'power3.inOut',
           })
           await gsap.to(shared, {
@@ -209,25 +182,27 @@
             top: to.top,
             width: to.width,
             height: to.height,
-            duration: 0.75,
+            duration: 0.52,
             ease: 'power3.inOut',
           })
-          await gsap.to(shared, { opacity: 0, duration: 0.15 })
+          void animatePage()
+          await gsap.to(shared, { opacity: 0, duration: 0.1 })
         }
       }
+      if (!shared) void animatePage()
       await gsap.to(curtain, {
         yPercent: -105,
-        duration: prefersReducedMotion() || shared ? 0 : 0.65,
+        duration: shared ? 0 : 0.4,
         ease: 'power3.inOut',
       })
       gsap.set(curtain, { visibility: 'hidden' })
     } finally {
       shared?.remove()
       transitionBusy = false
-      if (queuedBack !== undefined) {
-        const pending = queuedBack
-        queuedBack = undefined
-        void navigate(pending, false)
+      if (queuedNavigation) {
+        const pending = queuedNavigation
+        queuedNavigation = undefined
+        void navigate(pending.next, pending.push)
       }
     }
   }
@@ -240,28 +215,28 @@
       { xPercent: 105 },
       {
         xPercent: 0,
-        duration: prefersReducedMotion() ? 0 : 0.55,
+        duration: 0.4,
         ease: 'power3.out',
       },
     )
-    if (!prefersReducedMotion())
-      gsap.fromTo(
-        '.menu-link',
-        { y: 35, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          stagger: 0.06,
-          duration: 0.5,
-          delay: 0.13,
-          clearProps: 'all',
-        },
-      )
+    gsap.killTweensOf('[data-enter]')
+    gsap.fromTo(
+      '.menu-link',
+      { y: 35, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        stagger: 0.06,
+        duration: 0.5,
+        delay: 0.13,
+        clearProps: 'all',
+      },
+    )
   }
   async function closeMenu() {
     await gsap.to(menuPanel, {
       xPercent: 105,
-      duration: prefersReducedMotion() ? 0 : 0.38,
+      duration: 0.3,
       ease: 'power3.inOut',
     })
     menu.close()
@@ -270,7 +245,6 @@
     menuTrigger?.focus()
   }
   function movePreview(event: PointerEvent) {
-    if (prefersReducedMotion()) return
     const row = event.currentTarget as HTMLElement,
       rect = row.getBoundingClientRect()
     row.style.setProperty(
@@ -326,32 +300,15 @@
     const pop = () => void navigate(location.pathname, false)
     document.addEventListener('click', intercept)
     window.addEventListener('popstate', pop)
-    let seen = false
-    try {
-      seen = !!sessionStorage.getItem('cj-visited')
-      sessionStorage.setItem('cj-visited', '1')
-    } catch {
-      /* Privacy settings can disable session storage. */
-    }
-    const preferenceChanged = () => {
-      motionEnabled = !prefersReducedMotion()
-      if (!motionEnabled) {
-        entrance?.kill()
-        gsap.set(intro, { display: 'none' })
-        gsap.set('[data-enter]', { clearProps: 'transform,opacity' })
-      }
-    }
     const onScroll = () => {
       scrollRatio =
         window.scrollY /
         Math.max(1, document.documentElement.scrollHeight - innerHeight)
     }
-    window.addEventListener(MOTION_CHANGE, preferenceChanged)
     window.addEventListener('scroll', onScroll, { passive: true })
-    playIntro(!seen)
+    playIntro()
     return () => {
       entrance?.kill()
-      window.removeEventListener(MOTION_CHANGE, preferenceChanged)
       window.removeEventListener('scroll', onScroll)
       history.scrollRestoration = previousRestoration
       clearInterval(interval)
@@ -398,23 +355,6 @@
   style={`transform:scaleX(${scrollRatio})`}
   aria-hidden="true"
 ></div>
-<div class="motion-controls" class:motion-is-off={!motionEnabled}>
-  <button
-    onclick={toggleMotion}
-    aria-pressed={motionEnabled}
-    aria-label={motionEnabled ? 'Reduce animations' : 'Enable full animations'}
-    ><span class="motion-indicator" aria-hidden="true"></span>{motionEnabled
-      ? 'Motion on'
-      : 'Enable animations'}<span aria-hidden="true"
-      >{motionEnabled ? '◉' : '↗'}</span
-    ></button
-  >
-  {#if motionEnabled}<button
-      class="replay-intro"
-      onclick={() => playIntro(true)}
-      aria-label="Replay introduction">Replay ↺</button
-    >{/if}
-</div>
 <div id="top" class:contact-page={path === '/contact'}>
   <header class="site-header">
     <a href="/" class="brand" aria-label="Carl James Roxas — Home"
