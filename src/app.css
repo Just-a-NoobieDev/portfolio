@@ -934,21 +934,19 @@ main:focus {
   align-items: center;
 }
 .portrait-wrap {
-  background: #dedfd6;
+  background: #e5e4e0;
   position: relative;
   overflow: hidden;
-  aspect-ratio: 0.98;
+  aspect-ratio: 0.85;
 }
 .portrait-wrap > img {
-  width: 90%;
-  height: 93%;
-  object-fit: contain;
-  object-position: center bottom;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
   position: absolute;
-  bottom: 0;
-  left: 5%;
+  inset: 0;
   z-index: 1;
-  filter: grayscale(1);
 }
 .portrait-label {
   position: absolute;
@@ -2494,7 +2492,7 @@ a:focus-visible .rolling > span {
 /* One continuous stroke is mapped directly to the visitor's scroll distance. */
 .signal-introduction {
   position: relative;
-  height: 250svh;
+  height: 320svh;
   isolation: isolate;
 }
 .signal-sticky {
@@ -2863,7 +2861,7 @@ a:focus-visible .rolling > span {
 }
 @media (max-width: 760px) {
   .signal-introduction {
-    height: 250svh;
+    height: 320svh;
   }
   .signal-sticky {
     min-height: 0;
@@ -2999,4 +2997,83 @@ a:focus-visible .rolling > span {
 }
 .journey-link .text-link {
   font-size: 12px;
+}
+
+/* Establish a framed view, expand it, then travel through the scene. */
+.connection-journey {
+  height: 650svh;
+  background: var(--paper);
+}
+.connection-sticky {
+  background: var(--paper);
+  color: var(--ink);
+}
+.connection-frame {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  clip-path: inset(
+    calc((1 - var(--scene-focus, 0)) * 16%)
+      calc((1 - var(--scene-focus, 0)) * 5%)
+      calc((1 - var(--scene-focus, 0)) * 12%)
+      calc((1 - var(--scene-focus, 0)) * 47%) round
+      calc((1 - var(--scene-focus, 0)) * 24px)
+  );
+  background: radial-gradient(
+    ellipse at 63% 45%,
+    #23396b 0%,
+    #101625 44%,
+    #0b101b 80%
+  );
+  will-change: clip-path;
+}
+.connection-frame .connection-scene {
+  inset: 0;
+  height: 100%;
+  z-index: 0;
+}
+.connection-heading:not(.preview-copy) {
+  color: var(--paper);
+}
+.connection-heading.preview-copy {
+  opacity: var(--intro-copy, 1);
+}
+.connection-heading.preview-copy .eyebrow {
+  color: var(--muted);
+}
+.connection-heading.preview-copy p {
+  color: var(--muted);
+}
+.connection-sticky:not(.immersed) .connection-top,
+.connection-sticky:not(.immersed) .connection-caption {
+  color: var(--muted);
+}
+.connection-top,
+.connection-caption {
+  transition: color 0.3s;
+}
+.connection-top {
+  border-color: #8390ae40;
+}
+@media (max-width: 760px) {
+  .connection-journey {
+    height: 560svh;
+  }
+  .connection-frame {
+    clip-path: inset(
+      calc((1 - var(--scene-focus, 0)) * 40%)
+        calc((1 - var(--scene-focus, 0)) * 6%)
+        calc((1 - var(--scene-focus, 0)) * 8%)
+        calc((1 - var(--scene-focus, 0)) * 6%) round
+        calc((1 - var(--scene-focus, 0)) * 18px)
+    );
+  }
+  .connection-frame .connection-scene {
+    top: 25%;
+    height: 75%;
+  }
+  .connection-heading.preview-copy h2 {
+    font-size: 40px;
+  }
 }

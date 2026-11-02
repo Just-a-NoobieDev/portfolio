@@ -69,6 +69,7 @@ caseStudy: {
 - Name, email, location, résumé path, and professional links: `src/lib/profile.ts`.
 - Personal biography and toolkit: the About section in `src/App.svelte`.
 - Replace `public/Carl-James-Roxas-Resume.pdf` when your résumé changes.
+- About uses the supplied color portrait at `public/images/carl-color.jpg`, without a grayscale filter.
 - Colors, type, layout, and breakpoints: `src/app.css`.
 - Geometry, materials, assembly, and pointer response: `src/lib/signature-scene.ts`.
 - Reusable motion actions: `src/lib/motion.ts`.
@@ -81,11 +82,11 @@ Current content and assets come from the existing portfolio repository. Nabify a
 ## Interaction behavior
 
 - Every page load begins with “Kumusta.” followed by “Let’s build.” Returning visits use the same greeting.
-- Destination-labeled route transitions start immediately, take about 0.64 seconds, and retain a queued navigation click. Page content enters while the curtain exits.
+- Destination-labeled route transitions start immediately and take about 1.55 seconds with gentler easing. Navigation clicks made during a transition are queued. The destination label glides in and out, and the page entrance overlaps the curtain reveal.
 - A twisting chrome ribbon and blue core replace the initial-based sculpture. The object moves automatically and responds to pointer movement and desktop dragging, without instructional UI or rotation buttons.
 - “Under the interface” has four reversible scroll chapters across four viewport heights: a closed ribbon, opened geometry with real project interface panels, a particle constellation with flowing connections, and a reassembled sculpture. The camera and materials change with scroll position.
-- The introduction stays in view while a single SVG stroke grows in direct proportion to scrolling. Its dash length uses the real measured path geometry; a moving tip marks its endpoint. Scrolling backward retracts the line, and no complete guide or parallel paths appear in advance. Desktop and mobile use their own geometry.
-- An original “possibility to connection” closing sequence assembles a silver bridge, carries a blue signal through an opening gateway, and reveals the collaboration invitation. It loads close to the section and pauses offscreen.
+- The introduction stays in view over 320 viewport-height units while a single SVG stroke grows in direct proportion to scrolling. Its dash length uses the real measured path geometry; a moving tip marks its endpoint. Scrolling backward retracts the line, and no complete guide or parallel paths appear in advance. Desktop and mobile use their own geometry.
+- The original “possibility to connection” closing scene starts in a framed view, expands to fill the viewport, assembles a silver bridge, and carries a blue signal through a gateway into a constellation. Four chapters unfold over 650 viewport-height units on desktop (560 on mobile), with scroll smoothing and overlapping camera movement. It loads close to the section and pauses offscreen.
 - After the footer, a visible scroll-progress bar continues the journey: Home → Work → About → Contact → Home. Completing the bar with a fresh downward wheel, touch, or keyboard gesture uses the existing route curtain. Pausing, resizing, and restoring history cannot trigger navigation on their own. The destination title is also a normal link.
 - A typographic marquee and scroll-linked project images connect the sections.
 - Project previews respond to desktop pointers and remain visible on touch devices.

@@ -33,11 +33,11 @@
     window.scrollTo({ top: 0, behavior: 'instant' })
     introWord = 'Kumusta.'
     gsap.set(intro, { display: 'flex', visibility: 'visible', yPercent: 0 })
+    gsap.set('[data-enter]', { y: 56, opacity: 0 })
     entrance = gsap
       .timeline({
         onComplete: () => {
           intro.style.visibility = 'hidden'
-          void animatePage()
         },
       })
       .fromTo(
@@ -63,7 +63,8 @@
       .set('.intro-greeting', { y: 25 }, 0.88)
       .to('.intro-greeting', { y: 0, opacity: 1, duration: 0.35 }, 0.9)
     entrance
-      .to(intro, { yPercent: -110, duration: 0.85, ease: 'power4.inOut' }, 1.35)
+      .to(intro, { yPercent: -110, duration: 1, ease: 'power2.inOut' }, 1.35)
+      .call(() => void animatePage(0.24), [], 1.35)
       .call(
         () => window.dispatchEvent(new CustomEvent(REPLAY_SIGNATURE)),
         [],
@@ -90,17 +91,18 @@
       (project) => filter === 'All work' || project.category === filter,
     ),
   )
-  async function animatePage() {
+  async function animatePage(delay = 0) {
     await tick()
     gsap.killTweensOf('[data-enter]')
     gsap.fromTo(
       '[data-enter]',
-      { y: 45, opacity: 0 },
+      { y: 56, opacity: 0 },
       {
         y: 0,
         opacity: 1,
-        duration: 0.65,
-        stagger: 0.045,
+        duration: 1,
+        stagger: 0.065,
+        delay,
         ease: 'power3.out',
         clearProps: 'all',
       },
@@ -157,10 +159,21 @@
       // Own the entire transform: a CSS translateY would otherwise survive
       // as a pixel offset and keep the covering curtain below the viewport.
       gsap.set(curtain, { x: 0, y: 0, yPercent: 105, visibility: 'visible' })
+      gsap.fromTo(
+        '.curtain-name',
+        { y: 45, opacity: 0 },
+        {
+          y: 0,
+          opacity: 1,
+          duration: 0.42,
+          delay: 0.18,
+          ease: 'power2.out',
+        },
+      )
       await gsap.to(curtain, {
         yPercent: 0,
-        duration: 0.24,
-        ease: 'power3.inOut',
+        duration: 0.65,
+        ease: 'power2.inOut',
       })
       if (push) history.pushState({}, '', next)
       path = next
@@ -172,34 +185,41 @@
       document
         .querySelector<HTMLElement>('#page-title')
         ?.focus({ preventScroll: true })
-      if (shared) {
-        const target =
-          document.querySelector<HTMLImageElement>('.detail-image img')
-        if (target) {
-          const to = target.getBoundingClientRect()
-          gsap.to(curtain, {
-            yPercent: -105,
-            duration: 0.4,
-            ease: 'power3.inOut',
-          })
-          await gsap.to(shared, {
+      // Start the content underneath the exiting curtain, with enough overlap
+      // for the heading to still be moving when it is actually revealed.
+      void animatePage(0.24)
+      gsap.to('.curtain-name', {
+        y: -45,
+        opacity: 0,
+        duration: 0.5,
+        ease: 'power2.in',
+      })
+      const revealCurtain = gsap.to(curtain, {
+        yPercent: -105,
+        duration: 0.9,
+        ease: 'power2.inOut',
+      })
+      const target = shared
+        ? document.querySelector<HTMLImageElement>('.detail-image img')
+        : null
+      if (shared && target) {
+        const to = target.getBoundingClientRect()
+        await Promise.all([
+          revealCurtain,
+          gsap.to(shared, {
             left: to.left,
             top: to.top,
             width: to.width,
             height: to.height,
-            duration: 0.52,
-            ease: 'power3.inOut',
-          })
-          void animatePage()
-          await gsap.to(shared, { opacity: 0, duration: 0.1 })
-        }
+            duration: 1.05,
+            ease: 'power2.inOut',
+          }),
+        ])
+        await gsap.to(shared, { opacity: 0, duration: 0.18 })
+      } else {
+        shared?.remove()
+        await revealCurtain
       }
-      if (!shared) void animatePage()
-      await gsap.to(curtain, {
-        yPercent: -105,
-        duration: shared ? 0 : 0.4,
-        ease: 'power3.inOut',
-      })
       gsap.set(curtain, { visibility: 'hidden' })
     } finally {
       shared?.remove()
@@ -224,7 +244,6 @@
         ease: 'power3.out',
       },
     )
-    gsap.killTweensOf('[data-enter]')
     gsap.fromTo(
       '.menu-link',
       { y: 35, opacity: 0 },
@@ -589,12 +608,12 @@
         <div class="about-grid">
           <div class="portrait-wrap" data-enter>
             <img
-              src="/images/carl.png"
+              src="/images/carl-color.jpg"
               alt="Carl James Roxas"
-              width="420"
-              height="520"
+              width="1600"
+              height="1600"
             /><span class="portrait-label">CARL JAMES ROXAS <span>↗</span></span
-            ><span class="portrait-decoration" aria-hidden="true">CJ</span>
+            >
           </div>
           <div class="about-copy" data-enter>
             <h2>A developer who cares<br />how it all <em>connects.</em></h2>

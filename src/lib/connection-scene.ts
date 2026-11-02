@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { journeyProgress } from './journey-progress'
 
 const clamp = (value: number) => THREE.MathUtils.clamp(value, 0, 1)
 const smooth = (a: number, b: number, value: number) =>
@@ -11,6 +12,7 @@ export function createConnectionJourney(
   section: HTMLElement,
   onReady: () => void,
   onLost: () => void,
+  readProgress: () => number,
 ) {
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
@@ -128,6 +130,44 @@ export function createConnectionJourney(
     structure.add(dot)
     packets.push(dot)
   }
+  const constellation = new THREE.Group()
+  constellation.position.set(0, 0.5, -42)
+  structure.add(constellation)
+  const networkMaterial = new THREE.LineBasicMaterial({
+    color: '#6f9bff',
+    transparent: true,
+    opacity: 0,
+  })
+  const networkPoints: THREE.Vector3[] = []
+  const networkNodes: THREE.Mesh[] = []
+  const nodeGeometry = new THREE.IcosahedronGeometry(0.065, 1)
+  const networkPositions: number[] = []
+  for (let i = 0; i < 70; i++) {
+    const y = 1 - (i / 69) * 2,
+      r = Math.sqrt(1 - y * y),
+      phi = i * Math.PI * (3 - Math.sqrt(5))
+    const point = new THREE.Vector3(
+      Math.cos(phi) * r * 5.5,
+      y * 5,
+      Math.sin(phi) * r * 4,
+    )
+    networkPoints.push(point)
+    const node = new THREE.Mesh(nodeGeometry, i % 5 === 0 ? blue : pale)
+    node.position.copy(point)
+    constellation.add(node)
+    networkNodes.push(node)
+    if (i > 4)
+      for (const other of [i - 1, i - 5]) {
+        const previous = networkPoints[other]!
+        networkPositions.push(...point.toArray(), ...previous.toArray())
+      }
+  }
+  const networkGeometry = new THREE.BufferGeometry()
+  networkGeometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute(networkPositions, 3),
+  )
+  constellation.add(new THREE.LineSegments(networkGeometry, networkMaterial))
   const stars = new Float32Array(420 * 3)
   for (let i = 0; i < 420; i++) {
     stars[i * 3] = Math.sin(i * 127.1) * 17
@@ -215,17 +255,17 @@ export function createConnectionJourney(
     const dt = previous ? Math.min((now - previous) / 1000, 0.06) : 0.016
     previous = now
     time += dt
-    progress = THREE.MathUtils.damp(progress, target, 8, dt)
-    const form = smooth(0.03, 0.55, progress),
-      open = smooth(0.68, 0.97, progress)
+    target = readProgress()
+    progress = THREE.MathUtils.damp(progress, target, 10, dt)
+    const choreography = journeyProgress(progress)
+    const travel = choreography.travel
+    const passage = choreography.passage
+    const form = smooth(0.03, 0.55, travel),
+      open = smooth(0.45, 0.8, travel)
     slats.forEach((slat, i) => {
       const fraction = i / (total - 1),
         base = bridgePoint(fraction)
-      const localForm = smooth(
-        fraction * 0.23,
-        0.27 + fraction * 0.23,
-        progress,
-      )
+      const localForm = smooth(fraction * 0.23, 0.27 + fraction * 0.23, travel)
       const scatter = 1 - localForm
       slat.position
         .copy(base)
@@ -242,7 +282,8 @@ export function createConnectionJourney(
         Math.sin(i * 1.4) * scatter * 1.5,
       )
     })
-    const signalPosition = bridgePoint(0.05 + progress * 0.9)
+    const signalPosition = bridgePoint(0.05 + travel * 0.9)
+    signalPosition.z -= passage * 19
     signalPosition.y += 1.15 + Math.sin(time * 2) * 0.07
     signal.position.copy(signalPosition)
     ball.rotation.set(time * 0.18, time * 0.3, 0)
@@ -262,17 +303,27 @@ export function createConnectionJourney(
     })
     const mobile = camera.aspect < 1
     camera.position.set(
-      (mobile ? 2.4 : 4.5) * (1 - progress) + pointerX * 0.5,
-      (mobile ? 3.5 : 3) - progress * 1.15 + pointerY * 0.25,
-      14 - progress * 26,
+      (mobile ? 2.4 : 4.5) * (1 - travel) + pointerX * 0.5,
+      (mobile ? 3.5 : 3) - travel * 1.15 + pointerY * 0.25,
+      14 - travel * 26 - passage * 18,
     )
     camera.lookAt(
       signal.position.x * 0.4,
       -0.2 + open * 0.5,
-      -6 - progress * 17,
+      signal.position.z - 4,
     )
     dust.rotation.y = time * 0.008
-    structure.position.x = mobile ? 0 : 1.5 * (1 - open)
+    structure.position.x = mobile
+      ? 0
+      : 1.5 * (1 - open) + (1 - choreography.focus) * 3
+    constellation.visible = passage > 0.01
+    constellation.rotation.y = time * 0.035 + passage * 0.3
+    constellation.rotation.z = Math.sin(time * 0.15) * 0.04
+    constellation.scale.setScalar(0.65 + passage * 0.35)
+    networkMaterial.opacity = passage * 0.36
+    networkNodes.forEach((node, i) =>
+      node.scale.setScalar(0.5 + passage * 0.7 + Math.sin(time + i) * 0.12),
+    )
     renderer.render(scene, camera)
     if (first) {
       first = false

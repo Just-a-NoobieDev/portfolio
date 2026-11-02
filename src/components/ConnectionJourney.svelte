@@ -1,11 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte'
+  import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import { journeyProgress } from '../lib/journey-progress'
   let host: HTMLElement
   let canvasHost: HTMLDivElement
   let progress = $state(0)
   let ready = $state(false)
-  const phase = $derived(progress < 0.32 ? 0 : progress < 0.72 ? 1 : 2)
+  const choreography = $derived(journeyProgress(progress))
+  const phase = $derived(choreography.chapter)
   const chapters = [
     {
       label: '01 / POSSIBILITY',
@@ -18,7 +21,12 @@
       description: 'The pieces find their place. A direction becomes clear.',
     },
     {
-      label: '03 / WHAT COMES NEXT',
+      label: '03 / A NEW PERSPECTIVE',
+      title: 'See what’s possible.',
+      description: 'Go beyond the surface. Find a new point of view.',
+    },
+    {
+      label: '04 / WHAT COMES NEXT',
       title: 'Let’s work together.',
       description: 'Bring your idea. Let’s see where it can go.',
     },
@@ -26,12 +34,18 @@
   onMount(() => {
     let disposed = false
     let destroyScene: (() => void) | undefined
-    const trigger = ScrollTrigger.create({
-      trigger: host,
-      start: 'top top',
-      end: 'bottom bottom',
-      onUpdate: (self) => {
-        progress = self.progress
+    const driver = { value: 0 }
+    const tween = gsap.to(driver, {
+      value: 1,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: host,
+        start: 'top top',
+        end: 'bottom bottom',
+        scrub: 0.65,
+      },
+      onUpdate: () => {
+        progress = driver.value
         host.style.setProperty('--connection-progress', String(progress))
       },
     })
@@ -53,6 +67,7 @@
             () => {
               ready = false
             },
+            () => progress,
           )
         } catch {
           ready = false
@@ -65,7 +80,8 @@
     return () => {
       disposed = true
       observer.disconnect()
-      trigger.kill()
+      tween.scrollTrigger?.kill()
+      tween.kill()
       destroyScene?.()
     }
   })
@@ -77,23 +93,34 @@
   bind:this={host}
   aria-label="From a possibility to a connection: a scroll-driven journey"
 >
-  <div class="connection-sticky" class:ready>
-    <div
-      class="connection-scene"
-      bind:this={canvasHost}
-      role="img"
-      aria-label="A blue signal travels across an assembling silver bridge toward an opening gateway"
-    >
-      <div class="connection-fallback" aria-hidden="true"><i></i><b></b></div>
+  <div
+    class="connection-sticky"
+    class:ready
+    class:immersed={choreography.focus > 0.98}
+    style={`--scene-focus:${choreography.focus};--intro-copy:${choreography.introOpacity}`}
+  >
+    <div class="connection-frame">
+      <div
+        class="connection-scene"
+        bind:this={canvasHost}
+        role="img"
+        aria-label="A framed blue signal expands into a full-screen bridge journey, passes through a gateway, and enters a constellation of connections"
+      >
+        <div class="connection-fallback" aria-hidden="true"><i></i><b></b></div>
+      </div>
     </div>
     <div class="connection-top">
       <span>FROM A POSSIBILITY TO A CONNECTION</span><span
         >FOLLOW THE SIGNAL ↓</span
       >
     </div>
-    <div class="connection-heading" class:invitation={phase === 2}>
+    <div
+      class="connection-heading"
+      class:invitation={phase === 3}
+      class:preview-copy={phase === 0}
+    >
       {#key phase}<span class="eyebrow">{chapters[phase].label}</span>
-        {#if phase === 2}<h2>
+        {#if phase === 3}<h2>
             <a href="/contact"
               >Let’s work<br /><em>together.</em><span
                 class="connection-arrow"
