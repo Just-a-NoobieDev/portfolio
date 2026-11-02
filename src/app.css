@@ -3086,3 +3086,8 @@ a:focus-visible .rolling > span {
 .page-line-flow .connection-sticky {
   background: transparent;
 }
+
+/* Clear the incoming stroke before the dark frame begins expanding. */
+.page-line-flow > .scroll-thread {
+  opacity: var(--thread-opacity, 1);
+}

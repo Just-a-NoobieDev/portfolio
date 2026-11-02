@@ -62,9 +62,7 @@
         end: () => {
           const scene = host.querySelector<HTMLElement>('#connection')
           return scene
-            ? window.scrollY +
-                scene.getBoundingClientRect().top +
-                Math.max(1, scene.offsetHeight - innerHeight) * 0.22
+            ? window.scrollY + scene.getBoundingClientRect().top + 0
             : 'bottom 35%'
         },
         onUpdate: (self) => {

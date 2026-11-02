@@ -462,7 +462,8 @@
                 <h2>Built to <em>solve.</em></h2>
               </div>
               <a href="/work" class="text-link"
-                >All work <sup>0{projects.length}</sup> <span>↗</span></a
+                >All work <sup>{String(projects.length).padStart(2, '0')}</sup>
+                <span>↗</span></a
               >
             </div>
             <div class="project-grid">
@@ -517,7 +518,9 @@
             A selection of applications, platforms, and experiments.<br
             />Different problems. The same attention to detail.
           </p>
-          <span class="large-index">0{projects.length}</span>
+          <span class="large-index"
+            >{String(projects.length).padStart(2, '0')}</span
+          >
         </div>
       </section>
       <section class="work-archive section-wrap" aria-label="Project showcase">
@@ -563,7 +566,9 @@
                 >
               </div>
               <div class="project-row-main">
-                <span class="small-index">0{project.order}</span>
+                <span class="small-index"
+                  >{String(project.order).padStart(2, '0')}</span
+                >
                 <div>
                   <h2>
                     <a href={`/work/${project.slug}`}

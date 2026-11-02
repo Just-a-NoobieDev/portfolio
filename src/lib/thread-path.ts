@@ -11,7 +11,7 @@ function workCurve(w: number, h: number, workBottom: number, offset: number) {
 // geometry, so later portions cannot begin drawing before earlier ones finish.
 function entryCurve(w: number, h: number, offset: number, incomingHeight = h) {
   const Y = (value: number) => offset + value
-  return `C${w * 0.19} ${Y(incomingHeight * 0.04)} ${w * 0.03} ${Y(h * 0.55)} ${w * 0.22} ${Y(h * 0.7)} C${w * 0.41} ${Y(h * 0.85)} ${w * 0.34} ${Y(h * 0.42)} ${w * 0.52} ${Y(h * 0.42)} C${w * 0.7} ${Y(h * 0.42)} ${w * 0.86} ${Y(h * 0.7)} ${w * 1.06} ${Y(h * 0.52)}`
+  return `C${w * 0.19} ${Y(incomingHeight * 0.04)} ${w * 0.12} ${Y(h * 0.22)} ${w * 0.32} ${Y(h * 0.32)} C${w * 0.52} ${Y(h * 0.42)} ${w * 0.56} ${Y(h * 0.43)} ${w * 0.7} ${Y(h * 0.5)} C${w * 0.84} ${Y(h * 0.57)} ${w * 0.84} ${Y(h * 0.67)} ${w * 0.88} ${Y(h * 0.76)}`
 }
 export function threadPath(
   variant: ThreadVariant,

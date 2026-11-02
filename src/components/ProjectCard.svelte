@@ -11,7 +11,9 @@
     use:parallaxImage
     style={`--project-color:${project.color}`}
     aria-label={`Explore ${project.title}`}
-    ><span class="project-number">0{project.order} / SELECTED WORK</span><img
+    ><span class="project-number"
+      >{String(project.order).padStart(2, '0')} / SELECTED WORK</span
+    ><img
       src={project.image}
       alt={project.imageAlt}
       loading="lazy"

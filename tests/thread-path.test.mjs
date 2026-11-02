@@ -73,3 +73,35 @@ for (const [
     }
     assert.equal(joins, 12)
   })
+
+for (const width of [1440, 390])
+  test(`the entry stroke descends into the frame at width ${width}`, () => {
+    const d = threadPath('entry', width, 844)
+    const commands = [...d.matchAll(/([MC])([^MC]+)/g)]
+    let point
+    for (const [, command, values] of commands) {
+      const n = values
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number)
+      if (command === 'M') {
+        point = n
+        continue
+      }
+      let lastY = point[1]
+      for (let step = 1; step <= 100; step++) {
+        const t = step / 100,
+          u = 1 - t
+        const y =
+          u ** 3 * point[1] +
+          3 * u * u * t * n[1] +
+          3 * u * t * t * n[3] +
+          t ** 3 * n[5]
+        assert.ok(y >= lastY, 'the curve must not rise out above the frame')
+        lastY = y
+      }
+      point = n.slice(4, 6)
+    }
+    assert.ok(point[0] < width * 0.95)
+    assert.ok(point[1] > 844 * 0.4 && point[1] < 844 * 0.88)
+  })

@@ -43,3 +43,13 @@ test('view expansion and camera movement stay continuous across chapter boundari
   assert.deepEqual(journeyProgress(-1), journeyProgress(0))
   assert.deepEqual(journeyProgress(2), journeyProgress(1))
 })
+
+test('the incoming line and preview copy clear before dark expansion starts', () => {
+  for (let i = 0; i <= 1000; i++) {
+    const state = journeyProgress(i / 1000)
+    if (state.focus > 0) {
+      assert.equal(state.lineOpacity, 0)
+      assert.equal(state.introOpacity, 0)
+    }
+  }
+})

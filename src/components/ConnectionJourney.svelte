@@ -47,6 +47,12 @@
       onUpdate: () => {
         progress = driver.value
         host.style.setProperty('--connection-progress', String(progress))
+        host
+          .closest<HTMLElement>('.page-line-flow')
+          ?.style.setProperty(
+            '--thread-opacity',
+            String(journeyProgress(progress).lineOpacity),
+          )
       },
     })
     // Load the extra scene near its section instead of allocating another GPU scene at startup.
