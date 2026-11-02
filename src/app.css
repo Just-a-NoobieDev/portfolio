@@ -1178,11 +1178,11 @@ main:focus {
   background: var(--ink);
   color: var(--paper);
   visibility: hidden;
-  transform: translateY(105%);
   border-radius: 40% 10% 35% 10% / 5% 3% 7% 3%;
   display: grid;
   place-items: center;
   pointer-events: auto;
+  will-change: transform;
 }
 .page-curtain > span {
   font-size: 75px;

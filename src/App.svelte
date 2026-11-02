@@ -151,7 +151,9 @@
         nav.find((item) => item.path === next)?.label ??
         projects.find((item) => `/work/${item.slug}` === next)?.title ??
         'Explore'
-      gsap.set(curtain, { yPercent: 105, visibility: 'visible' })
+      // Own the entire transform: a CSS translateY would otherwise survive
+      // as a pixel offset and keep the covering curtain below the viewport.
+      gsap.set(curtain, { x: 0, y: 0, yPercent: 105, visibility: 'visible' })
       await gsap.to(curtain, {
         yPercent: 0,
         duration: 0.24,
