@@ -1,27 +1,27 @@
 // Navigation requires a new downward gesture in the ending, not a resize,
 // history restoration, a timer, or merely landing at the bottom of the page.
 export class ScrollContinuation {
-  private armedAt = -Infinity
+  private distance = 0
   private triggered = false
-  private previous = 0
-  intent(direction: number, now: number, inEnding: boolean) {
-    if (direction < 0) this.armedAt = -Infinity
-    else if (direction > 0 && inEnding) {
-      this.armedAt = now
-      // At the document end another gesture cannot produce a scroll event.
-      // It still counts as continuing after an intentional, visible ending.
-      if (this.previous >= 0.998 && !this.triggered) {
-        this.triggered = true
-        return true
-      }
-    }
-    return false
+  constructor(private requiredDistance = 600) {}
+  get progress() {
+    return Math.min(1, Math.max(0, this.distance / this.requiredDistance))
   }
-  update(progress: number, now: number) {
-    const crossedEnd = this.previous < 0.998 && progress >= 0.998
-    this.previous = progress
-    if (progress < 0.95) this.triggered = false
-    if (!this.triggered && crossedEnd && now - this.armedAt < 1800) {
+  reset() {
+    this.distance = 0
+    this.triggered = false
+  }
+  feed(distance: number, atEnd: boolean) {
+    if (!atEnd) {
+      this.reset()
+      return false
+    }
+    if (this.triggered) return false
+    this.distance = Math.max(
+      0,
+      Math.min(this.requiredDistance, this.distance + distance),
+    )
+    if (this.progress >= 1) {
       this.triggered = true
       return true
     }

@@ -13,39 +13,34 @@ const { ScrollContinuation, nextChapter } = await import(
   `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
 )
 
-test('restoring a page at the ending never navigates without fresh input', () => {
+test('scrolling through the page cannot fill the footer bar', () => {
   const c = new ScrollContinuation()
-  assert.equal(c.update(1, 100), false)
-  assert.equal(c.update(1, 90000), false)
-  assert.equal(c.intent(1, 90001, true), true)
-  assert.equal(c.intent(1, 90002, true), false)
+  assert.equal(c.feed(2000, false), false)
+  assert.equal(c.progress, 0)
 })
-test('downward scrolling through the progress range navigates exactly once', () => {
+test('continued input at the document end fills the bar and navigates once', () => {
   const c = new ScrollContinuation()
-  c.update(0.3, 0)
-  c.intent(1, 100, true)
-  assert.equal(c.update(0.75, 200), false)
-  assert.equal(c.update(1, 300), true)
-  assert.equal(c.update(1, 400), false)
-  assert.equal(c.intent(1, 500, true), false)
+  assert.equal(c.feed(200, true), false)
+  assert.equal(c.progress, 1 / 3)
+  assert.equal(c.feed(200, true), false)
+  assert.equal(c.feed(200, true), true)
+  assert.equal(c.progress, 1)
+  assert.equal(c.feed(200, true), false)
 })
-test('a gesture outside the ending cannot arm an automatic page jump', () => {
+test('scrolling back drains the bar and leaving the footer clears it', () => {
   const c = new ScrollContinuation()
-  c.intent(1, 10, false)
-  assert.equal(c.update(1, 20), false)
+  c.feed(300, true)
+  c.feed(-120, true)
+  assert.equal(c.progress, 0.3)
+  c.feed(-200, false)
+  assert.equal(c.progress, 0)
 })
-test('scrolling back or changing geometry cancels a previously armed continuation', () => {
+test('resetting after resize or restoration cannot trigger a page change', () => {
   const c = new ScrollContinuation()
-  c.update(0.7, 0)
-  c.intent(1, 10, true)
-  c.intent(-1, 20, false)
-  assert.equal(c.update(1, 30), false)
-})
-test('stale input does not trigger navigation when layout later reaches the end', () => {
-  const c = new ScrollContinuation()
-  c.update(0.9, 0)
-  c.intent(1, 10, true)
-  assert.equal(c.update(1, 3000), false)
+  c.feed(550, true)
+  c.reset()
+  assert.equal(c.progress, 0)
+  assert.equal(c.feed(50, true), false)
 })
 test('the four main chapters form a complete route sequence', () => {
   assert.deepEqual(
