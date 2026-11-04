@@ -5,16 +5,22 @@
   import SignalTrace from './components/SignalTrace.svelte'
   import ScrollThread from './components/ScrollThread.svelte'
   import ConnectionJourney from './components/ConnectionJourney.svelte'
+  import ProcessJourney from './components/ProcessJourney.svelte'
+  import ProcessExperience from './components/ProcessExperience.svelte'
   import NextChapter from './components/NextChapter.svelte'
-  import ProjectCard from './components/ProjectCard.svelte'
+  import ProjectShowcase from './components/ProjectShowcase.svelte'
   import ContactBlock from './components/ContactBlock.svelte'
   import { projects, featuredProjects } from './lib/projects'
   import { profile } from './lib/profile'
-  import { magnetic, reveal } from './lib/motion'
+  import { liquidButton, magnetic, reveal } from './lib/motion'
   import { REPLAY_SIGNATURE } from './lib/motion-preference'
   let path = $state(location.pathname.replace(/\/$/, '') || '/')
   let filter = $state('All work')
   let menuOpen = $state(false)
+  let headerOutOfView = $state(false)
+  let siteHeader: HTMLElement
+  let returnMenuFocus: HTMLElement | null = null
+  let menuClosing = false
   let transitionBusy = false
   let queuedNavigation: { next: string; push: boolean } | undefined
   let intro: HTMLDivElement,
@@ -22,12 +28,12 @@
     menu: HTMLDialogElement,
     menuPanel: HTMLDivElement,
     menuTrigger: HTMLButtonElement
-  let activeProject = $state<string | null>(null)
   let time = $state('')
   let introWord = $state('Kumusta.')
   let transitionTitle = $state('Explore.')
   let scrollRatio = $state(0)
   let entrance: gsap.core.Timeline | undefined
+  let menuMotion: gsap.core.Timeline | undefined
   function playIntro() {
     entrance?.kill()
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -148,6 +154,7 @@
         }
       }
       if (menuOpen) {
+        menuMotion?.kill()
         menu.close()
         menuOpen = false
         document.body.style.overflow = ''
@@ -232,53 +239,124 @@
     }
   }
   async function openMenu() {
+    if (menu.open) return
+    menuMotion?.kill()
+    menuClosing = false
+    returnMenuFocus =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : menuTrigger
     menuOpen = true
     menu.showModal()
+    menu
+      .querySelector<HTMLButtonElement>('.menu-close')
+      ?.focus({ preventScroll: true })
     document.body.style.overflow = 'hidden'
-    gsap.fromTo(
-      menuPanel,
-      { xPercent: 105 },
-      {
-        xPercent: 0,
-        duration: 0.4,
-        ease: 'power3.out',
-      },
-    )
-    gsap.fromTo(
-      '.menu-link',
-      { y: 35, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        stagger: 0.06,
-        duration: 0.5,
-        delay: 0.13,
-        clearProps: 'all',
-      },
-    )
+    menuMotion = gsap
+      .timeline()
+      .fromTo(
+        '.menu-backdrop',
+        { opacity: 0 },
+        { opacity: 1, duration: 0.6, ease: 'power2.out' },
+        0,
+      )
+      .fromTo(
+        menuPanel,
+        {
+          xPercent: 125,
+        },
+        {
+          xPercent: 0,
+          duration: 1.05,
+          ease: 'power4.inOut',
+        },
+        0,
+      )
+      .fromTo(
+        '.menu-edge path',
+        { attr: { d: 'M100 0 C-35 20 -35 80 100 100 Z' } },
+        {
+          attr: { d: 'M100 0 C100 20 100 80 100 100 Z' },
+          duration: 1.15,
+          ease: 'power3.inOut',
+        },
+        0,
+      )
+      .fromTo(
+        '.menu-close',
+        { scale: 0.6, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out' },
+        0.2,
+      )
+      .fromTo(
+        '.menu-link',
+        { x: 95, y: 0, opacity: 0 },
+        {
+          x: 0,
+          y: 0,
+          opacity: 1,
+          stagger: 0.065,
+          duration: 0.85,
+          ease: 'power3.out',
+        },
+        0.28,
+      )
+      .fromTo(
+        '.menu-bottom',
+        { y: 15, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: 'power2.out' },
+        0.35,
+      )
   }
-  async function closeMenu() {
-    await gsap.to(menuPanel, {
-      xPercent: 105,
-      duration: 0.3,
-      ease: 'power3.inOut',
-    })
+  async function closeMenu(restoreFocus = true) {
+    if (!menu.open || menuClosing) return
+    menuClosing = true
+    menuMotion?.kill()
+    menuMotion = gsap
+      .timeline()
+      .to(
+        '.menu-link',
+        {
+          x: 55,
+          opacity: 0,
+          stagger: 0.025,
+          duration: 0.4,
+          ease: 'power2.in',
+        },
+        0,
+      )
+      .to(
+        menuPanel,
+        {
+          xPercent: 125,
+          duration: 0.85,
+          ease: 'power3.inOut',
+        },
+        0.04,
+      )
+      .to(
+        '.menu-edge path',
+        {
+          attr: { d: 'M100 0 C-35 20 -35 80 100 100 Z' },
+          duration: 0.8,
+          ease: 'power3.inOut',
+        },
+        0,
+      )
+      .to(
+        '.menu-backdrop',
+        { opacity: 0, duration: 0.7, ease: 'power2.inOut' },
+        0.12,
+      )
+    await menuMotion
     menu.close()
     menuOpen = false
     document.body.style.overflow = ''
-    menuTrigger?.focus()
-  }
-  function movePreview(event: PointerEvent) {
-    const row = event.currentTarget as HTMLElement,
-      rect = row.getBoundingClientRect()
-    row.style.setProperty(
-      '--preview-y',
-      `${(event.clientY - rect.top - rect.height / 2) * 0.22}px`,
-    )
-    row.style.setProperty(
-      '--preview-x',
-      `${(event.clientX - rect.left - rect.width / 2) * 0.025}px`,
-    )
+    menuClosing = false
+    if (restoreFocus) {
+      await tick()
+      returnMenuFocus?.focus({ preventScroll: true })
+    }
   }
   onMount(() => {
     const updateTime = () =>
@@ -324,6 +402,11 @@
     const pop = () => void navigate(location.pathname, false)
     document.addEventListener('click', intercept)
     window.addEventListener('popstate', pop)
+    const headerObserver = new IntersectionObserver(([entry]) => {
+      headerOutOfView =
+        !entry?.isIntersecting && siteHeader.getBoundingClientRect().bottom <= 0
+    })
+    headerObserver.observe(siteHeader)
     const onScroll = () => {
       scrollRatio =
         window.scrollY /
@@ -333,6 +416,8 @@
     playIntro()
     return () => {
       entrance?.kill()
+      menuMotion?.kill()
+      headerObserver.disconnect()
       window.removeEventListener('scroll', onScroll)
       history.scrollRestoration = previousRestoration
       clearInterval(interval)
@@ -380,7 +465,7 @@
   aria-hidden="true"
 ></div>
 <div id="top" class:contact-page={path === '/contact'}>
-  <header class="site-header">
+  <header class="site-header" bind:this={siteHeader}>
     <a href="/" class="brand" aria-label="Carl James Roxas — Home"
       ><span class="brand-mark">CJ</span><span>Carl James Roxas</span></a
     >
@@ -400,7 +485,8 @@
       >
     </nav>
     <button
-      class="menu-trigger"
+      class="menu-trigger header-menu-trigger"
+      use:magnetic
       onclick={openMenu}
       bind:this={menuTrigger}
       aria-label="Open navigation menu"
@@ -408,103 +494,116 @@
       aria-controls="navigation-dialog"><span>Menu</span><i></i><i></i></button
     >
   </header>
+  <div
+    class="floating-menu"
+    class:visible={headerOutOfView && !menuOpen}
+    inert={!headerOutOfView || menuOpen}
+    aria-hidden={!headerOutOfView || menuOpen}
+  >
+    <button
+      class="menu-trigger floating-menu-trigger"
+      use:magnetic
+      use:liquidButton
+      onclick={openMenu}
+      aria-label="Open navigation menu"
+      aria-expanded={menuOpen}
+      aria-controls="navigation-dialog"
+    >
+      <span class="button-fill" aria-hidden="true"></span><span
+        class="menu-glyph"
+        aria-hidden="true"><i></i><i></i></span
+      >
+    </button>
+  </div>
   <main id="main" tabindex="-1">
     {#if path === '/'}
-      <section class="hero">
-        <div class="hero-copy">
-          <div class="eyebrow" data-enter>
-            <span class="status-dot"></span> FULL-STACK DEVELOPER / PHILIPPINES
+      <div class="home-experience">
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow" data-enter>
+              <span class="status-dot"></span> FULL-STACK DEVELOPER / PHILIPPINES
+            </div>
+            <h1 id="page-title" tabindex="-1">
+              <span data-enter>Thoughtful code.</span><span data-enter
+                >Remarkable</span
+              ><span class="blue-text" data-enter>experiences.</span>
+            </h1>
+            <p class="hero-description" data-enter>
+              I build thoughtful interfaces and the<br class="desktop-break" /> reliable
+              systems behind them.
+            </p>
+            <div class="hero-actions" data-enter>
+              <a href="/work" class="button primary" use:magnetic
+                >Explore my work <span>↗</span></a
+              ><a
+                href={profile.resume}
+                target="_blank"
+                rel="noreferrer"
+                class="text-link">Résumé <span>↗</span></a
+              >
+            </div>
           </div>
-          <h1 id="page-title" tabindex="-1">
-            <span data-enter>Thoughtful code.</span><span data-enter
-              >Remarkable</span
-            ><span class="blue-text" data-enter>experiences.</span>
-          </h1>
-          <p class="hero-description" data-enter>
-            I build thoughtful interfaces and the<br class="desktop-break" /> reliable
-            systems behind them.
-          </p>
-          <div class="hero-actions" data-enter>
-            <a href="/work" class="button primary" use:magnetic
-              >Explore my work <span>↗</span></a
-            ><a
-              href={profile.resume}
-              target="_blank"
-              rel="noreferrer"
-              class="text-link">Résumé <span>↗</span></a
-            >
-          </div>
-        </div>
-        <div class="hero-art"><Signature /></div>
-        <div class="hero-bottom">
-          <a href="#introduction" class="scroll-cue"
-            ><span>SCROLL TO EXPLORE</span><i></i><span>↓</span></a
-          ><span class="hero-location"
-            >BASED IN BULACAN, PH <span class="clock">{time} PHT</span></span
+          <div
+            class="hero-art"
+            data-process-orb
+            role="slider"
+            aria-orientation="horizontal"
+            aria-valuemin="-180"
+            aria-valuemax="180"
+            aria-valuenow="-22"
+            tabindex="0"
+            aria-label="Interactive 3D miniature of Carl coding at a laptop and second monitor. Drag or use left and right arrows to rotate. Home resets the view."
           >
-        </div>
-      </section>
-      <div class="page-line-flow">
-        <ScrollThread variant="page" />
-        <SignalTrace />
-        <div class="work-thread">
-          <div class="kinetic-marquee" aria-hidden="true">
-            <div>
-              {#each [0, 1, 2, 3] as repeat}<span
-                  >INTERFACES <i>✳</i> SYSTEMS <i>✳</i> EXPERIENCES <i>✳</i>
-                </span>{/each}
-            </div>
-          </div>
-          <section class="selected-work section-wrap" id="selected-work">
-            <div class="work-heading" use:reveal>
-              <div>
-                <div class="eyebrow">02 / SELECTED WORK</div>
-                <h2>Built to <em>solve.</em></h2>
-              </div>
-              <a href="/work" class="text-link"
-                >All work <sup>{String(projects.length).padStart(2, '0')}</sup>
-                <span>↗</span></a
-              >
-            </div>
-            <div class="project-grid">
-              {#each featuredProjects as project, index (project.slug)}<ProjectCard
-                  {project}
-                  {index}
-                />{/each}
-            </div>
-          </section>
-          <section class="capabilities section-wrap">
-            <div class="section-eyebrow" use:reveal>
-              <span>FROM THE SURFACE TO THE SYSTEM</span><span
-                >03 / WHAT I DO</span
-              >
-            </div>
-            <div class="capability-row" use:reveal>
-              <span class="small-index">01</span>
-              <h3>Interfaces that feel right.</h3>
-              <p>
-                Responsive, considered frontends that make complex things feel
-                simple.
-              </p>
-              <span aria-hidden="true">↗</span>
-            </div>
-            <div class="capability-row" use:reveal>
-              <span class="small-index">02</span>
-              <h3>Systems that hold up.</h3>
-              <p>
-                APIs, databases, and application logic that connect the
-                experience.
-              </p>
-              <span aria-hidden="true">↗</span>
-            </div>
-          </section>
-          <div class="journey-link section-wrap">
-            <a href="#connection" class="text-link"
-              >Follow the signal <span>↓</span></a
+            <div class="process-hero-fallback" aria-hidden="true"></div>
+            <span class="hero-model-caption" aria-hidden="true"
+              ><span>THE MAKING OF A POSSIBILITY</span><span
+                >DRAG TO ROTATE ↔</span
+              ></span
             >
           </div>
+          <div class="hero-bottom">
+            <a href="#introduction" class="scroll-cue"
+              ><span>SCROLL TO EXPLORE</span><i></i><span>↓</span></a
+            ><span class="hero-location"
+              >BASED IN BULACAN, PH <span class="clock">{time} PHT</span></span
+            >
+          </div>
+        </section>
+        <div class="page-line-flow">
+          <ScrollThread variant="page" />
+          <SignalTrace />
+          <ProcessJourney />
+          <div class="work-thread">
+            <div class="kinetic-marquee" aria-hidden="true">
+              <div>
+                {#each [0, 1, 2, 3] as repeat}<span
+                    >INTERFACES <i>✳</i> SYSTEMS <i>✳</i> EXPERIENCES <i>✳</i>
+                  </span>{/each}
+              </div>
+            </div>
+            <section class="selected-work section-wrap" id="selected-work">
+              <div class="work-heading" use:reveal>
+                <div>
+                  <div class="eyebrow">03 / SELECTED WORK</div>
+                  <h2>Built to <em>solve.</em></h2>
+                </div>
+                <a href="/work" class="text-link"
+                  >All work <sup>{String(projects.length).padStart(2, '0')}</sup
+                  >
+                  <span>↗</span></a
+                >
+              </div>
+              <ProjectShowcase items={featuredProjects} compact />
+            </section>
+            <div class="journey-link section-wrap">
+              <a href="#connection" class="text-link"
+                >Follow the signal <span>↓</span></a
+              >
+            </div>
+          </div>
+          <ConnectionJourney />
         </div>
-        <ConnectionJourney />
+        <ProcessExperience />
       </div>
       <ContactBlock connected />
     {:else if path === '/work'}
@@ -540,65 +639,7 @@
           </div>
           <span class="archive-hint">A FEW THINGS I’VE BUILT ↙</span>
         </div>
-        <div class="project-list">
-          {#each visibleProjects as project (project.slug)}<article
-              class:preview-active={activeProject === project.slug}
-              class="project-row"
-              onpointerenter={() => (activeProject = project.slug)}
-              onpointerleave={() => (activeProject = null)}
-              onpointermove={movePreview}
-            >
-              <div
-                class="project-row-image"
-                style={`--project-color:${project.color}`}
-              >
-                <a
-                  href={`/work/${project.slug}`}
-                  tabindex="-1"
-                  aria-hidden="true"
-                  ><img
-                    src={project.image}
-                    alt=""
-                    loading="lazy"
-                    width="900"
-                    height="550"
-                  /><span class="view-cursor">VIEW ↗</span></a
-                >
-              </div>
-              <div class="project-row-main">
-                <span class="small-index"
-                  >{String(project.order).padStart(2, '0')}</span
-                >
-                <div>
-                  <h2>
-                    <a href={`/work/${project.slug}`}
-                      >{project.shortTitle ?? project.title}</a
-                    >
-                  </h2>
-                  <p>{project.description}</p>
-                  <div class="project-tech">
-                    {project.technologies.join(' / ')}
-                  </div>
-                  <div class="project-row-links">
-                    {#if project.demoStatus === 'offline'}<span
-                        class="offline-label">Demo offline</span
-                      >{/if}{#if project.demoUrl && project.demoStatus !== 'offline'}<a
-                        href={project.demoUrl}
-                        target="_blank"
-                        rel="noreferrer">Visit project ↗</a
-                      >{/if}{#if project.repositoryUrl}<a
-                        href={project.repositoryUrl}
-                        target="_blank"
-                        rel="noreferrer">Source code ↗</a
-                      >{/if}<a href={`/work/${project.slug}`} class="case-link"
-                      >Project overview <span>↗</span></a
-                    >
-                  </div>
-                </div>
-                <span class="row-arrow" aria-hidden="true">↗</span>
-              </div>
-            </article>{/each}
-        </div>
+        <ProjectShowcase items={visibleProjects} />
         <p class="archive-note" aria-live="polite">
           Showing {visibleProjects.length}
           {visibleProjects.length === 1 ? 'project' : 'projects'}. A few more
@@ -786,15 +827,30 @@
 >
   <button
     class="menu-backdrop"
-    onclick={closeMenu}
+    onclick={() => void closeMenu()}
+    tabindex="-1"
     aria-label="Close navigation"
   ></button>
+  <button
+    onclick={() => void closeMenu()}
+    use:magnetic
+    use:liquidButton
+    aria-label="Close navigation menu"
+    class="menu-close"
+    ><span class="button-fill" aria-hidden="true"></span><span
+      class="menu-glyph"
+      aria-hidden="true"><i></i><i></i></span
+    ></button
+  >
   <div class="menu-panel" bind:this={menuPanel}>
+    <svg
+      class="menu-edge"
+      viewBox="0 0 100 100"
+      preserveAspectRatio="none"
+      aria-hidden="true"><path d="M100 0 C100 20 100 80 100 100 Z" /></svg
+    >
     <div class="menu-top">
-      <span class="eyebrow">TAKE A LOOK AROUND</span><button
-        onclick={closeMenu}
-        class="menu-close">Close <span>×</span></button
-      >
+      <span class="eyebrow">TAKE A LOOK AROUND</span>
     </div>
     <nav aria-label="Expanded navigation">
       {#each nav as item, index}<a

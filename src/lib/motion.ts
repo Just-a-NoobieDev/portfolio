@@ -115,3 +115,44 @@ export function magnetic(node: HTMLElement) {
     }
   })
 }
+
+// A blue disk rises into the button and continues upward when the pointer leaves.
+export function liquidButton(node: HTMLElement) {
+  const fill = node.querySelector<HTMLElement>('.button-fill')
+  if (!fill) return {}
+  gsap.set(fill, { y: 0, yPercent: 100 })
+  let tween: gsap.core.Tween | undefined
+  const enter = () => {
+    tween?.kill()
+    tween = gsap.fromTo(
+      fill,
+      { y: 0, yPercent: 100 },
+      { yPercent: 0, duration: 0.55, ease: 'power3.out' },
+    )
+  }
+  const leave = () => {
+    tween?.kill()
+    tween = gsap.to(fill, {
+      y: 0,
+      yPercent: -100,
+      duration: 0.5,
+      ease: 'power3.inOut',
+      onComplete: () => {
+        gsap.set(fill, { y: 0, yPercent: 100 })
+      },
+    })
+  }
+  node.addEventListener('pointerenter', enter)
+  node.addEventListener('pointerleave', leave)
+  node.addEventListener('focus', enter)
+  node.addEventListener('blur', leave)
+  return {
+    destroy() {
+      tween?.kill()
+      node.removeEventListener('pointerenter', enter)
+      node.removeEventListener('pointerleave', leave)
+      node.removeEventListener('focus', enter)
+      node.removeEventListener('blur', leave)
+    },
+  }
+}

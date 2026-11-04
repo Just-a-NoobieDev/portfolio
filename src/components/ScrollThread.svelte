@@ -1,7 +1,12 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
-  import { threadPath, type ThreadVariant } from '../lib/thread-path'
+  import {
+    threadPath,
+    storyThreadPath,
+    storyDrawProgress,
+    type ThreadVariant,
+  } from '../lib/thread-path'
   let { variant, draw }: { variant: ThreadVariant; draw?: number } = $props()
   let container: HTMLDivElement
   let svg: SVGSVGElement
@@ -16,6 +21,44 @@
   onMount(() => {
     const host = container.parentElement!
     let trigger: ScrollTrigger | undefined
+    let arrival = 0,
+      departure = 0,
+      processStart = 0,
+      processEnd = 0,
+      start = 0,
+      end = 0
+    let hasProcess = false
+    let samples: { travel: number; length: number }[] = []
+    const readDraw = () => {
+      if (!hasProcess) return trigger?.progress ?? 0
+      if (window.scrollY >= processEnd && samples.length) {
+        const fraction = Math.max(
+          0,
+          Math.min(
+            1,
+            (window.scrollY - processEnd) / Math.max(1, end - processEnd),
+          ),
+        )
+        const target = fraction * samples[samples.length - 1]!.travel
+        let index = 1
+        while (index < samples.length - 1 && samples[index]!.travel < target)
+          index++
+        const from = samples[index - 1]!,
+          to = samples[index]!
+        const mix =
+          (target - from.travel) / Math.max(0.001, to.travel - from.travel)
+        return (from.length + (to.length - from.length) * mix) / length
+      }
+      return storyDrawProgress(
+        window.scrollY,
+        start,
+        processStart,
+        processEnd,
+        end,
+        arrival,
+        departure,
+      )
+    }
     const measure = () => {
       const width = host.clientWidth,
         height = host.offsetHeight
@@ -34,23 +77,70 @@
       const previewHeight =
         scene?.querySelector<HTMLElement>('.connection-sticky')?.offsetHeight
       svg.setAttribute('viewBox', `0 0 ${width} ${height}`)
-      line.setAttribute(
-        'd',
-        threadPath(
-          variant,
+      const process = host.querySelector<HTMLElement>('#process')
+      hasProcess = !!process
+      if (process && scene && sceneTop !== undefined) {
+        const top =
+          process.getBoundingClientRect().top - host.getBoundingClientRect().top
+        const bottom = top + process.offsetHeight
+        const paths = storyThreadPath(
           width,
-          height,
-          workBottom,
-          introHeight,
+          introHeight!,
+          top,
+          bottom,
           sceneTop,
-          previewHeight,
-        ),
-      )
+          workBottom!,
+          previewHeight!,
+        )
+        line.setAttribute('d', paths.path)
+        const measurePath = document.createElementNS(
+          'http://www.w3.org/2000/svg',
+          'path',
+        )
+        length = line.getTotalLength()
+        measurePath.setAttribute('d', paths.before)
+        arrival = measurePath.getTotalLength() / length
+        measurePath.setAttribute('d', paths.through)
+        departure = measurePath.getTotalLength() / length
+        // Weight vertical travel so the drawing head stays in view across Work.
+        // Horizontal loops still consume scroll distance rather than appearing at once.
+        samples = [{ travel: 0, length: departure * length }]
+        let previous = line.getPointAtLength(departure * length),
+          distance = 0
+        for (let i = 1; i <= 320; i++) {
+          const at = (departure + ((1 - departure) * i) / 320) * length
+          const point = line.getPointAtLength(at)
+          distance +=
+            Math.max(0, point.y - previous.y) +
+            Math.abs(point.x - previous.x) * 0.08 +
+            Math.abs(point.y - previous.y) * 0.08 +
+            0.001
+          samples.push({ travel: distance, length: at })
+          previous = point
+        }
+        const absoluteTop = host.getBoundingClientRect().top + window.scrollY
+        start = absoluteTop - innerHeight * 0.65
+        processStart = absoluteTop + top
+        processEnd = absoluteTop + bottom - innerHeight
+        end = absoluteTop + sceneTop
+      } else
+        line.setAttribute(
+          'd',
+          threadPath(
+            variant,
+            width,
+            height,
+            workBottom,
+            introHeight,
+            sceneTop,
+            previewHeight,
+          ),
+        )
       length = line.getTotalLength()
       line.setAttribute('stroke-dasharray', `${length} ${length}`)
       line.setAttribute(
         'stroke-dashoffset',
-        String(length * (1 - (draw ?? scrollProgress))),
+        String(length * (1 - (draw ?? readDraw()))),
       )
       svg.style.visibility = 'visible'
     }
@@ -58,7 +148,7 @@
     if (draw === undefined)
       trigger = ScrollTrigger.create({
         trigger: host,
-        start: 'top 85%',
+        start: 'top 65%',
         end: () => {
           const scene = host.querySelector<HTMLElement>('#connection')
           return scene
@@ -66,10 +156,10 @@
             : 'bottom 35%'
         },
         onUpdate: (self) => {
-          scrollProgress = self.progress
+          scrollProgress = hasProcess ? readDraw() : self.progress
         },
         onRefresh: (self) => {
-          scrollProgress = self.progress
+          scrollProgress = hasProcess ? readDraw() : self.progress
         },
       })
     const resize = new ResizeObserver(() => {

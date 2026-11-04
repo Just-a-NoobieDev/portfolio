@@ -1,6 +1,6 @@
 # Carl James Roxas — Portfolio
 
-A Svelte 5 + Vite + TypeScript portfolio. GSAP handles entrances, navigation, scroll reveals, magnetic buttons, and project transitions. A dynamically imported Three.js scene builds a twisting chrome ribbon around an electric blue core. A separate closing journey expands into a full-screen bridge and constellation before the contact invitation. No model file or remote rendering service is needed.
+A Svelte 5 + Vite + TypeScript portfolio. GSAP handles entrances, navigation, scroll reveals, magnetic buttons, and project transitions. A shared Three.js experience carries one blue orb from a miniature coding studio along the drawn line into a bright, scroll-driven freelance process: understand, plan, build, and launch. A separate darker closing journey expands into a full-screen bridge and constellation before the contact invitation. No model file or remote rendering service is needed.
 
 ## Run locally
 
@@ -73,6 +73,7 @@ caseStudy: {
 - Colors, type, layout, and breakpoints: `src/app.css`.
 - Geometry, materials, assembly, and pointer response: `src/lib/signature-scene.ts`.
 - Reusable motion actions: `src/lib/motion.ts`.
+- Freelance process scene and timing: `src/lib/process-scene.ts` and `src/lib/process-progress.ts`.
 - Line composition and rendering: `src/components/ScrollThread.svelte` and `src/lib/thread-path.ts`.
 - Closing bridge and camera choreography: `src/lib/connection-scene.ts`.
 - Next-page order and scroll-intent rules: `src/lib/scroll-continuation.ts`.
@@ -83,15 +84,15 @@ All 13 projects from the old portfolio’s five archive pages are included on Wo
 
 - Every page load begins with “Kumusta.” followed by “Let’s build.” Returning visits use the same greeting.
 - Destination-labeled route transitions start immediately and take about 1.55 seconds with gentler easing. Navigation clicks made during a transition are queued. The destination label glides in and out, and the page entrance overlaps the curtain reveal.
-- A twisting chrome ribbon and blue core replace the initial-based sculpture. The object moves automatically and responds to pointer movement and desktop dragging, without instructional UI or rotation buttons.
-- The earlier “Under the interface” walkthrough has been removed so projects appear sooner and the closing 3D sequence has a distinct purpose.
-- One connected SVG path and one scroll controller carry the line from the naturally scrolling introduction through work, capabilities, and the framed 3D opening. There are no separate section triggers starting later fragments early. Original flowing curves use measured SVG lengths; scrolling backward retracts the stroke. Images naturally cover the line where it passes behind them. The entry curve keeps descending into the preview and finishes there. The line and preview copy clear before the dark frame starts expanding; the contact footer has no decorative line.
+- The hero is an original code-modeled miniature of Carl at a laptop and second monitor (`src/lib/developer-desk.ts`). A seated character types subtly; one screen shows code and the other contains the actual shared orb mesh. Dragging rotates the entire desk with eased motion; left/right arrows rotate and Home resets. Vertical touch scrolling stays available. On scroll, that same preview orb emerges from the monitor and joins the measured line path. All geometry and screen textures are local, with no model downloads or additional dependencies.
+- The process journey replaces the earlier “Under the interface” walkthrough. It starts framed, expands into a light blueprint world, resolves tangled questions into a plan, raises physical experience/logic/data modules, then scans and activates the completed system. There are no browser mockups in this scene. It unfolds over 620 viewport-height units on desktop and 580 on mobile. The same hero orb mesh follows the incoming line, continues along the stroke through Selected Work, and physically transfers to the closing renderer once its projected position and size match; the renderer is paused offscreen and disposed on navigation.
+- One connected SVG path and one scroll controller carry the line from the naturally scrolling introduction through the process journey, selected work, and the framed closing opening. Measured arrival and departure lengths keep the same stroke sequential across the pinned process runway, so later fragments cannot appear early. Original flowing curves use measured SVG lengths; scrolling backward retracts the stroke. Images naturally cover the line where it passes behind them. The entry curve keeps descending into the preview and finishes there. The line and preview copy clear before the dark frame starts expanding; the contact footer has no decorative line.
 - The original “possibility to connection” closing scene starts in a framed view, expands to fill the viewport, assembles a silver bridge, and carries a blue signal through a gateway into a constellation. Four chapters unfold over 650 viewport-height units on desktop (560 on mobile), with scroll smoothing and overlapping camera movement. It loads close to the section and pauses offscreen.
 - A compact footer row with a scroll-progress bar continues the journey: Home → Work → About → Contact → Home. Once the document reaches its bottom, further wheel, touch, or keyboard input fills the small bar and uses the existing route curtain. It adds no full-screen section or extra scroll runway. Pausing, resizing, and restoring history cannot trigger navigation on their own. The destination title is also a normal link.
 - A typographic marquee and scroll-linked project images connect the sections.
-- Project previews respond to desktop pointers and remain visible on touch devices.
+- Home and Work share `src/components/ProjectShowcase.svelte`: spacious project rows, a large cursor-following preview with a blue View circle, smooth vertical image changes, and a muted active title. The preview is portalled above the page so it can overlap rows. Keyboard focus exposes the same artwork; touch and small screens show linked images inline. Demo and source links stay independently clickable.
 - A project image expands into its overview when its starting position is visible; other links use the route curtain.
-- A native modal dialog traps menu focus, supports Escape, and restores focus on close.
+- A native modal dialog traps menu focus, supports Escape, and restores focus on close. Its curved edge settles over 0.85 seconds, links enter with a short stagger, and closing eases over 0.65 seconds. The menu trigger uses the same magnetic pointer motion as the main buttons.
 - Animations run automatically on every visit. There is no motion or replay toolbar; old saved choices do not disable animation. The device settings remain unchanged.
 - Scenes use capped frame rates and device pixel ratios, pause offscreen/in background tabs, and release GPU resources on unmount. A CSS sculpture remains visible if WebGL fails.
 - Browser history is preserved, and Back restores each page’s previous scroll position.
@@ -99,3 +100,5 @@ All 13 projects from the old portfolio’s five archive pages are included on Wo
 ## Hosting
 
 `.openai/hosting.json` stores the private Sites project identity and static output directory. It contains no credentials. Keep deployment credentials outside source control. You can deploy the same static build to your own Vercel project later.
+
+The desktop header scrolls naturally. An IntersectionObserver reveals the fixed circular menu only after that header leaves the viewport; mobile keeps its header menu for access at the top. The fixed button scales in, has a directional blue liquid hover fill and magnetic movement, and hands off to a matching blue close button. The drawer unfolds with an animated SVG leading edge and staggered horizontal link entrances, then reverses on close. The native dialog traps focus, supports Escape and outside clicks, and returns focus without changing scroll position. Scrollbar space remains reserved while the dialog locks page scrolling.

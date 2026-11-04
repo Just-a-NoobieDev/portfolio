@@ -11,14 +11,15 @@
   const phase = $derived(choreography.chapter)
   const chapters = [
     {
-      label: '01 / POSSIBILITY',
-      title: 'A thought worth following.',
-      description: 'Every good project starts with a question.',
+      label: '04 / YOUR NEXT CHAPTER',
+      title: 'What could we build next?',
+      description: 'Your next idea deserves a clear path forward.',
     },
     {
-      label: '02 / MOMENTUM',
+      label: 'MAKE THE CONNECTION',
       title: 'Build the connection.',
-      description: 'The pieces find their place. A direction becomes clear.',
+      description:
+        'Bring the ambition. Let’s find the right direction together.',
     },
     {
       label: '03 / A NEW PERSPECTIVE',
@@ -116,9 +117,7 @@
       </div>
     </div>
     <div class="connection-top">
-      <span>FROM A POSSIBILITY TO A CONNECTION</span><span
-        >FOLLOW THE SIGNAL ↓</span
-      >
+      <span>YOUR NEXT IDEA STARTS HERE</span><span>FOLLOW THE SIGNAL ↓</span>
     </div>
     <div
       class="connection-heading"

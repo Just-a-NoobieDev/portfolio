@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { journeyProgress } from './journey-progress'
+import { orbContinuity } from './orb-continuity'
 
 const clamp = (value: number) => THREE.MathUtils.clamp(value, 0, 1)
 const smooth = (a: number, b: number, value: number) =>
@@ -248,10 +249,20 @@ export function createConnectionJourney(
   }
   renderer.setAnimationLoop((now) => {
     if (!visible || document.hidden || lost) {
+      if (
+        !visible &&
+        orbContinuity.inClosing &&
+        orbContinuity.orb &&
+        orbContinuity.home
+      ) {
+        orbContinuity.home.add(orbContinuity.orb)
+        orbContinuity.inClosing = false
+        orbContinuity.closing = undefined
+      }
       previous = 0
       return
     }
-    if (previous && now - previous < 1000 / 40) return
+    if (previous && now - previous < 1000 / 60) return
     const dt = previous ? Math.min((now - previous) / 1000, 0.06) : 0.016
     previous = now
     time += dt
@@ -324,6 +335,44 @@ export function createConnectionJourney(
     networkNodes.forEach((node, i) =>
       node.scale.setScalar(0.5 + passage * 0.7 + Math.sin(time + i) * 0.12),
     )
+    // Project the destination into page coordinates while the line orb arrives.
+    // Once matched, move that exact mesh into this scene instead of showing a duplicate.
+    ball.visible = !orbContinuity.orb
+    shell.visible = !orbContinuity.orb
+    if (orbContinuity.orb) {
+      scene.updateMatrixWorld(true)
+      camera.updateMatrixWorld()
+      const center = signal.getWorldPosition(new THREE.Vector3())
+      const edge = center
+        .clone()
+        .add(
+          new THREE.Vector3(1, 0, 0)
+            .applyQuaternion(camera.quaternion)
+            .multiplyScalar(0.39 * signal.scale.x),
+        )
+      const projected = center.clone().project(camera)
+      const projectedEdge = edge.project(camera)
+      const bounds = host.getBoundingClientRect()
+      orbContinuity.closing = {
+        x: bounds.left + ((projected.x + 1) / 2) * bounds.width,
+        y: bounds.top + ((1 - projected.y) / 2) * bounds.height,
+        radius: (Math.abs(projectedEdge.x - projected.x) * bounds.width) / 2,
+        blend: choreography.focus,
+      }
+      if (
+        choreography.focus > 0.999 &&
+        section.getBoundingClientRect().top <= 1
+      ) {
+        signal.add(orbContinuity.orb)
+        orbContinuity.orb.position.set(0, 0, 0)
+        orbContinuity.orb.scale.setScalar(0.39 / 0.64)
+        orbContinuity.orb.rotation.set(time * 0.18, time * 0.3, 0)
+        orbContinuity.inClosing = true
+      } else if (orbContinuity.inClosing && orbContinuity.home) {
+        orbContinuity.home.add(orbContinuity.orb)
+        orbContinuity.inClosing = false
+      }
+    }
     renderer.render(scene, camera)
     if (first) {
       first = false
@@ -347,6 +396,11 @@ export function createConnectionJourney(
       'webglcontextrestored',
       contextRestored,
     )
+    if (orbContinuity.inClosing && orbContinuity.orb && orbContinuity.home) {
+      orbContinuity.home.add(orbContinuity.orb)
+      orbContinuity.inClosing = false
+    }
+    orbContinuity.closing = undefined
     const geometries = new Set<THREE.BufferGeometry>(),
       materials = new Set<THREE.Material>()
     scene.traverse((object) => {

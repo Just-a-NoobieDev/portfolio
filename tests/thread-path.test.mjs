@@ -105,3 +105,56 @@ for (const width of [1440, 390])
     assert.ok(point[0] < width * 0.95)
     assert.ok(point[1] > 844 * 0.4 && point[1] < 844 * 0.88)
   })
+
+const { storyThreadPath, storyDrawProgress } = await import(
+  `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
+)
+for (const width of [390, 1440])
+  test(`the process-to-work stroke has one start and smooth joins at ${width}px`, () => {
+    const { before, through, path } = storyThreadPath(
+      width,
+      1000,
+      1000,
+      6500,
+      8200,
+      7900,
+      844,
+    )
+    assert.ok(through.startsWith(before) && path.startsWith(through))
+    assert.equal((path.match(/M/g) ?? []).length, 1)
+    assert.ok(!/NaN|Infinity/.test(path))
+    let endpoint, control
+    for (const [, command, values] of path.matchAll(/([MC])([^MC]+)/g)) {
+      const n = values
+        .trim()
+        .split(/[\s,]+/)
+        .map(Number)
+      if (command === 'M') {
+        endpoint = n
+        continue
+      }
+      if (control) {
+        const a = [endpoint[0] - control[0], endpoint[1] - control[1]]
+        const b = [n[0] - endpoint[0], n[1] - endpoint[1]]
+        assert.ok(
+          (a[0] * b[0] + a[1] * b[1]) / (Math.hypot(...a) * Math.hypot(...b)) >
+            0.99999,
+        )
+      }
+      control = n.slice(2, 4)
+      endpoint = n.slice(4)
+    }
+  })
+test('a pinned process cannot reveal a later Work line early or cause a jump at its boundary', () => {
+  const draw = (y) => storyDrawProgress(y, 0, 1000, 5000, 8000, 0.25, 0.7)
+  assert.equal(draw(1000), 0.25)
+  assert.equal(draw(5000), 0.7)
+  assert.equal(draw(8000), 1)
+  assert.equal(draw(-100), 0)
+  let previous = 0
+  for (let y = 0; y <= 9000; y++) {
+    const current = draw(y)
+    assert.ok(current >= previous && current - previous < 0.001)
+    previous = current
+  }
+})
