@@ -12,6 +12,7 @@
   onMount(() => {
     const continuation = new ScrollContinuation()
     let previousTouch = 0
+    let scrollbarTouch = false
     const atEnd = () =>
       host.getBoundingClientRect().bottom <= innerHeight + 4 &&
       window.scrollY + innerHeight >= document.documentElement.scrollHeight - 4
@@ -32,9 +33,11 @@
       input(Math.min(160, Math.max(-160, pixels)))
     }
     const touchStart = (event: TouchEvent) => {
+      scrollbarTouch = !!(event.target as Element).closest('[role="scrollbar"]')
       previousTouch = event.touches[0]?.clientY ?? 0
     }
     const touchMove = (event: TouchEvent) => {
+      if (scrollbarTouch) return
       const y = event.touches[0]?.clientY ?? previousTouch
       input((previousTouch - y) * 1.5)
       previousTouch = y

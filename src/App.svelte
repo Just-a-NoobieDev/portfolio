@@ -8,6 +8,7 @@
   import ProcessJourney from './components/ProcessJourney.svelte'
   import ProcessExperience from './components/ProcessExperience.svelte'
   import NextChapter from './components/NextChapter.svelte'
+  import PageScrollbar from './components/PageScrollbar.svelte'
   import ProjectShowcase from './components/ProjectShowcase.svelte'
   import ContactBlock from './components/ContactBlock.svelte'
   import { projects, featuredProjects } from './lib/projects'
@@ -21,7 +22,7 @@
   let siteHeader: HTMLElement
   let returnMenuFocus: HTMLElement | null = null
   let menuClosing = false
-  let transitionBusy = false
+  let transitionBusy = $state(false)
   let queuedNavigation: { next: string; push: boolean } | undefined
   let intro: HTMLDivElement,
     curtain: HTMLDivElement,
@@ -31,7 +32,6 @@
   let time = $state('')
   let introWord = $state('Kumusta.')
   let transitionTitle = $state('Explore.')
-  let scrollRatio = $state(0)
   let entrance: gsap.core.Timeline | undefined
   let menuMotion: gsap.core.Timeline | undefined
   function playIntro() {
@@ -407,18 +407,11 @@
         !entry?.isIntersecting && siteHeader.getBoundingClientRect().bottom <= 0
     })
     headerObserver.observe(siteHeader)
-    const onScroll = () => {
-      scrollRatio =
-        window.scrollY /
-        Math.max(1, document.documentElement.scrollHeight - innerHeight)
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
     playIntro()
     return () => {
       entrance?.kill()
       menuMotion?.kill()
       headerObserver.disconnect()
-      window.removeEventListener('scroll', onScroll)
       history.scrollRestoration = previousRestoration
       clearInterval(interval)
       document.removeEventListener('click', intercept)
@@ -459,11 +452,7 @@
     >{transitionTitle}<span class="blue-dot">.</span></span
   >
 </div>
-<div
-  class="reading-progress"
-  style={`transform:scaleX(${scrollRatio})`}
-  aria-hidden="true"
-></div>
+<PageScrollbar hidden={menuOpen || transitionBusy} />
 <div id="top" class:contact-page={path === '/contact'}>
   <header class="site-header" bind:this={siteHeader}>
     <a href="/" class="brand" aria-label="Carl James Roxas — Home"
