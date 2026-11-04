@@ -15,8 +15,10 @@
   let scrollProgress = $state(0)
   $effect(() => {
     const value = Math.max(0, Math.min(1, draw ?? scrollProgress))
-    if (line && length)
+    if (line && length) {
       line.setAttribute('stroke-dashoffset', String(length * (1 - value)))
+      svg.style.visibility = value > 0.00005 ? 'visible' : 'hidden'
+    }
   })
   onMount(() => {
     const host = container.parentElement!
@@ -50,7 +52,15 @@
         return (from.length + (to.length - from.length) * mix) / length
       }
       return storyDrawProgress(
-        window.scrollY,
+        window.scrollY >= processStart && window.scrollY < processEnd
+          ? processStart +
+              (processEnd - processStart) *
+                (Number(
+                  host
+                    .querySelector<HTMLElement>('#process')
+                    ?.style.getPropertyValue('--process-progress'),
+                ) || 0)
+          : window.scrollY,
         start,
         processStart,
         processEnd,
@@ -142,9 +152,25 @@
         'stroke-dashoffset',
         String(length * (1 - (draw ?? readDraw()))),
       )
-      svg.style.visibility = 'visible'
+      svg.style.visibility =
+        (draw ?? readDraw()) > 0.00005 ? 'visible' : 'hidden'
     }
     measure()
+    const update = () => {
+      // Hold the arrival stroke at the pinned preview until it has faded away.
+      const pin =
+        window.scrollY >= processStart && window.scrollY < processEnd
+          ? window.scrollY - processStart
+          : 0
+      container.style.transform = `translateY(${pin}px)`
+      scrollProgress = readDraw()
+    }
+    window.addEventListener('process-progress', update)
+    const heroLayout = () => {
+      measure()
+      ScrollTrigger.refresh()
+    }
+    window.addEventListener('hero-layout', heroLayout)
     if (draw === undefined)
       trigger = ScrollTrigger.create({
         trigger: host,
@@ -156,10 +182,12 @@
             : 'bottom 35%'
         },
         onUpdate: (self) => {
-          scrollProgress = hasProcess ? readDraw() : self.progress
+          if (hasProcess) update()
+          else scrollProgress = self.progress
         },
         onRefresh: (self) => {
-          scrollProgress = hasProcess ? readDraw() : self.progress
+          if (hasProcess) update()
+          else scrollProgress = self.progress
         },
       })
     const resize = new ResizeObserver(() => {
@@ -169,6 +197,8 @@
     resize.observe(host)
     return () => {
       resize.disconnect()
+      window.removeEventListener('hero-layout', heroLayout)
+      window.removeEventListener('process-progress', update)
       trigger?.kill()
     }
   })

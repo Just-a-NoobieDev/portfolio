@@ -111,7 +111,7 @@
         class="connection-scene"
         bind:this={canvasHost}
         role="img"
-        aria-label="A framed blue signal expands into a full-screen bridge journey, passes through a gateway, and enters a constellation of connections"
+        aria-label="Carl catches the incoming orb, walks along an assembling bridge into a glowing ring, turns toward you and waves while holding the orb"
       >
         <div class="connection-fallback" aria-hidden="true"><i></i><b></b></div>
       </div>

@@ -2,6 +2,7 @@ import * as THREE from 'three'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { journeyProgress } from './journey-progress'
+import { createCarlCharacter } from './carl-character'
 import { orbContinuity } from './orb-continuity'
 
 const clamp = (value: number) => THREE.MathUtils.clamp(value, 0, 1)
@@ -56,6 +57,10 @@ export function createConnectionJourney(
   const pale = new THREE.MeshBasicMaterial({ color: '#b7d7ff' })
   const structure = new THREE.Group()
   scene.add(structure)
+  const carl = createCarlCharacter()
+  carl.group.name = 'Carl_waits_catches_explores_and_waves'
+  carl.group.scale.setScalar(0.7)
+  structure.add(carl.group)
   const slats: THREE.Mesh[] = []
   const bridgeGeometry = new RoundedBoxGeometry(3.6, 0.13, 0.48, 3, 0.055)
   const total = 36
@@ -276,15 +281,16 @@ export function createConnectionJourney(
     slats.forEach((slat, i) => {
       const fraction = i / (total - 1),
         base = bridgePoint(fraction)
-      const localForm = smooth(fraction * 0.23, 0.27 + fraction * 0.23, travel)
+      const localForm = smooth(fraction - 0.22, fraction - 0.05, travel)
+      slat.visible = localForm > 0.001
       const scatter = 1 - localForm
       slat.position
         .copy(base)
         .add(
           new THREE.Vector3(
-            Math.sin(i * 2.3) * scatter * 7,
-            Math.cos(i * 1.7) * scatter * 4,
-            Math.sin(i) * scatter * 2,
+            Math.sin(i * 2.3) * scatter * 1.5,
+            Math.cos(i * 1.7) * scatter * 1.6,
+            Math.sin(i) * scatter * 0.5,
           ),
         )
       slat.rotation.set(
@@ -293,18 +299,32 @@ export function createConnectionJourney(
         Math.sin(i * 1.4) * scatter * 1.5,
       )
     })
-    const signalPosition = bridgePoint(0.05 + travel * 0.9)
-    signalPosition.z -= passage * 19
-    signalPosition.y += 1.15 + Math.sin(time * 2) * 0.07
-    signal.position.copy(signalPosition)
+    const actorPosition = bridgePoint(0.03 + travel * 0.9)
+    carl.group.position.copy(actorPosition).add(new THREE.Vector3(0, 1.18, 0))
+    carl.group.rotation.y =
+      Math.PI * choreography.turn + Math.PI * choreography.greet
+    const walking =
+      smooth(0.27, 0.34, progress) * (1 - smooth(0.78, 0.88, progress))
+    // Stride advances only while scrolling along the bridge; the final wave stays live.
+    carl.animateJourney(
+      travel * 42,
+      walking,
+      choreography.catch,
+      choreography.greet,
+    )
+    if (choreography.greet > 0)
+      carl.animateJourney(time, 0, 1, choreography.greet)
+    structure.updateMatrixWorld(true)
+    const palmWorld = carl.carryAnchor.getWorldPosition(new THREE.Vector3())
+    signal.position.copy(structure.worldToLocal(palmWorld.clone()))
+    signal.scale.setScalar(0.48)
     ball.rotation.set(time * 0.18, time * 0.3, 0)
     shell.rotation.set(time * 0.4, time * 0.2, 0.3)
-    signal.scale.setScalar(1 + open * 0.35)
     gateHalves.forEach((half, i) => {
       const direction = i === 0 ? -1 : 1
-      half.position.x = direction * ((1 - form) * 4 + open * 1.35)
-      half.rotation.y = direction * ((1 - form) * 0.7 + open * 0.55)
-      half.rotation.z = direction * (1 - form) * 0.35
+      half.position.x = direction * (1 - form) * 2.5
+      half.rotation.y = direction * (1 - form) * 0.6
+      half.rotation.z = direction * (1 - form) * 0.2
     })
     gate.rotation.z = Math.sin(time * 0.22) * 0.025
     packets.forEach((packet, i) => {
@@ -316,13 +336,19 @@ export function createConnectionJourney(
     camera.position.set(
       (mobile ? 2.4 : 4.5) * (1 - travel) + pointerX * 0.5,
       (mobile ? 3.5 : 3) - travel * 1.15 + pointerY * 0.25,
-      14 - travel * 26 - passage * 18,
+      14 - travel * 26,
     )
     camera.lookAt(
       signal.position.x * 0.4,
       -0.2 + open * 0.5,
-      signal.position.z - 4,
+      signal.position.z - (1 - choreography.greet) * 3,
     )
+    scene.updateMatrixWorld(true)
+    const gazeTarget =
+      choreography.turn < 0.5 || choreography.greet > 0.5
+        ? camera.position.clone()
+        : gate.getWorldPosition(new THREE.Vector3())
+    carl.lookAtOrb(gazeTarget, dt)
     dust.rotation.y = time * 0.008
     structure.position.x = mobile
       ? 0
@@ -357,10 +383,10 @@ export function createConnectionJourney(
         x: bounds.left + ((projected.x + 1) / 2) * bounds.width,
         y: bounds.top + ((1 - projected.y) / 2) * bounds.height,
         radius: (Math.abs(projectedEdge.x - projected.x) * bounds.width) / 2,
-        blend: choreography.focus,
+        blend: choreography.catch,
       }
       if (
-        choreography.focus > 0.999 &&
+        choreography.catch > 0.999 &&
         section.getBoundingClientRect().top <= 1
       ) {
         signal.add(orbContinuity.orb)

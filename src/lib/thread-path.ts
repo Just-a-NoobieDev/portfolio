@@ -64,14 +64,17 @@ export function storyThreadPath(
   const w = Math.max(1, width),
     h = Math.max(1, introHeight),
     v = Math.max(1, viewport)
-  const intro = `M${w * 0.76} 0 C${w * 0.76} ${h * 0.16} ${w * 0.08} ${h * 0.14} ${w * 0.08} ${h * 0.37} C${w * 0.08} ${h * 0.6} ${w * 0.9} ${h * 0.49} ${w * 0.9} ${h * 0.72} C${w * 0.9} ${h * 0.95} ${w * 0.77} ${h * 0.93} ${w * 0.84} ${h}`
+  const mobile = w <= 760
+  const entryX = mobile ? 0.1 : 0.51
+  const intro = `M${w * 0.76} 0 C${w * 0.6} 0 ${w * 0.08} ${h * 0.14} ${w * 0.08} ${h * 0.37} C${w * 0.08} ${h * 0.6} ${w * entryX} ${h * 0.6} ${w * entryX} ${h * 0.82} C${w * entryX} ${h * 0.9} ${w * entryX} ${h * 0.93} ${w * entryX} ${h}`
   const Y = (y: number) => processTop + y
+  const contactY = v * (w <= 760 ? 0.42 : 0.16)
   const before =
     intro +
-    ` C${w * 0.98} ${Y(h * 0.14)} ${w * 0.94} ${Y(v * 0.34)} ${w * 0.88} ${Y(v * 0.5)} C${w * 0.82} ${Y(v * 0.66)} ${w * 0.88} ${Y(v * 0.68)} ${w * 0.88} ${Y(v * 0.76)}`
+    ` C${w * entryX} ${Y(h * 0.07)} ${w * entryX} ${Y(contactY - v * 0.08)} ${w * entryX} ${Y(contactY)}`
   const through =
     before +
-    ` C${w * 0.88} ${Y(v * 0.84)} ${w * 0.71} ${processBottom - v * 0.4 - h * 0.07} ${w * 0.78} ${processBottom - v * 0.4}`
+    ` C${w * entryX} ${Y(contactY + v * 0.08)} ${w * 0.71} ${processBottom - v * 0.4 - h * 0.07} ${w * 0.78} ${processBottom - v * 0.4}`
   const workHeight = Math.max(1, closingTop - processBottom)
   const path =
     through +
@@ -99,11 +102,11 @@ export function storyDrawProgress(
     return (
       arrival +
       (departure - arrival) *
-        // Hold the head at the window until the blue wave covers the line.
+        // Hold the head at the window until the scene reveal covers the line.
         clamp(
           ((scroll - processStart) / Math.max(1, processEnd - processStart) -
-            0.085) /
-            0.915,
+            0.05) /
+            0.95,
         )
     )
   return (

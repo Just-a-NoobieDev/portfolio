@@ -49,32 +49,32 @@
       .fromTo(
         '.intro-greeting',
         { y: 45, opacity: 0 },
-        { y: 0, opacity: 1, duration: 0.45, ease: 'power3.out' },
+        { y: 0, opacity: 1, duration: 0.65, ease: 'power3.out' },
       )
       .fromTo(
         '.intro-blue',
         { scaleX: 0 },
-        { scaleX: 1, duration: 1.45, ease: 'power2.inOut' },
+        { scaleX: 1, duration: 2.7, ease: 'power2.inOut' },
         0,
       )
     entrance
-      .to('.intro-greeting', { y: -25, opacity: 0, duration: 0.22 }, 0.65)
+      .to('.intro-greeting', { y: -25, opacity: 0, duration: 0.35 }, 1.3)
       .call(
         () => {
           introWord = 'Let’s build.'
         },
         [],
-        0.88,
+        1.67,
       )
-      .set('.intro-greeting', { y: 25 }, 0.88)
-      .to('.intro-greeting', { y: 0, opacity: 1, duration: 0.35 }, 0.9)
+      .set('.intro-greeting', { y: 25 }, 1.67)
+      .to('.intro-greeting', { y: 0, opacity: 1, duration: 0.6 }, 1.7)
     entrance
-      .to(intro, { yPercent: -110, duration: 1, ease: 'power2.inOut' }, 1.35)
-      .call(() => void animatePage(0.24), [], 1.35)
+      .to(intro, { yPercent: -110, duration: 1.25, ease: 'power2.inOut' }, 2.65)
+      .call(() => void animatePage(0.24), [], 2.65)
       .call(
         () => window.dispatchEvent(new CustomEvent(REPLAY_SIGNATURE)),
         [],
-        1.45,
+        2.8,
       )
   }
   const scrollPositions = new Map<string, number>()
@@ -507,57 +507,56 @@
   <main id="main" tabindex="-1">
     {#if path === '/'}
       <div class="home-experience">
-        <section class="hero">
-          <div class="hero-copy">
-            <div class="eyebrow" data-enter>
-              <span class="status-dot"></span> FULL-STACK DEVELOPER / PHILIPPINES
+        <div class="hero-runway">
+          <section class="hero">
+            <div class="hero-copy">
+              <div class="eyebrow" data-enter>
+                <span class="status-dot"></span> FULL-STACK DEVELOPER / PHILIPPINES
+              </div>
+              <h1 id="page-title" tabindex="-1">
+                <span data-enter>Thoughtful code.</span><span data-enter
+                  >Remarkable</span
+                ><span class="blue-text" data-enter>experiences.</span>
+              </h1>
+              <p class="hero-description" data-enter>
+                I build thoughtful interfaces and the<br
+                  class="desktop-break"
+                /> reliable systems behind them.
+              </p>
+              <div class="hero-actions" data-enter>
+                <a href="/work" class="button primary" use:magnetic
+                  >Explore my work <span>↗</span></a
+                ><a
+                  href={profile.resume}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="text-link">Résumé <span>↗</span></a
+                >
+              </div>
             </div>
-            <h1 id="page-title" tabindex="-1">
-              <span data-enter>Thoughtful code.</span><span data-enter
-                >Remarkable</span
-              ><span class="blue-text" data-enter>experiences.</span>
-            </h1>
-            <p class="hero-description" data-enter>
-              I build thoughtful interfaces and the<br class="desktop-break" /> reliable
-              systems behind them.
-            </p>
-            <div class="hero-actions" data-enter>
-              <a href="/work" class="button primary" use:magnetic
-                >Explore my work <span>↗</span></a
-              ><a
-                href={profile.resume}
-                target="_blank"
-                rel="noreferrer"
-                class="text-link">Résumé <span>↗</span></a
+            <div
+              class="hero-art"
+              data-process-orb
+              role="slider"
+              aria-orientation="horizontal"
+              aria-valuemin="9"
+              aria-valuemax="43"
+              aria-valuenow="20"
+              tabindex="0"
+              aria-label="Interactive 3D miniature of Carl coding at a laptop and second monitor. Drag or use left and right arrows to rotate. Home resets the view."
+            >
+              <div class="process-hero-fallback" aria-hidden="true"></div>
+            </div>
+            <div class="hero-bottom">
+              <a href="#introduction" class="scroll-cue"
+                ><span>SCROLL TO EXPLORE</span><i></i><span>↓</span></a
+              ><span class="hero-location"
+                >BASED IN BULACAN, PH <span class="clock">{time} PHT</span
+                ></span
               >
             </div>
-          </div>
-          <div
-            class="hero-art"
-            data-process-orb
-            role="slider"
-            aria-orientation="horizontal"
-            aria-valuemin="-180"
-            aria-valuemax="180"
-            aria-valuenow="-22"
-            tabindex="0"
-            aria-label="Interactive 3D miniature of Carl coding at a laptop and second monitor. Drag or use left and right arrows to rotate. Home resets the view."
-          >
-            <div class="process-hero-fallback" aria-hidden="true"></div>
-            <span class="hero-model-caption" aria-hidden="true"
-              ><span>THE MAKING OF A POSSIBILITY</span><span
-                >DRAG TO ROTATE ↔</span
-              ></span
-            >
-          </div>
-          <div class="hero-bottom">
-            <a href="#introduction" class="scroll-cue"
-              ><span>SCROLL TO EXPLORE</span><i></i><span>↓</span></a
-            ><span class="hero-location"
-              >BASED IN BULACAN, PH <span class="clock">{time} PHT</span></span
-            >
-          </div>
-        </section>
+          </section>
+        </div>
         <div class="page-line-flow">
           <ScrollThread variant="page" />
           <SignalTrace />

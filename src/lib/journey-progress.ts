@@ -6,11 +6,14 @@ const smooth = (start: number, end: number, value: number) => {
 // The view earns the full screen before the camera journey begins.
 export function journeyProgress(value: number) {
   const progress = clamp(value)
-  const travel = smooth(0.22, 0.94, progress)
+  const travel = smooth(0.26, 0.88, progress)
   return {
     progress,
-    focus: smooth(0.035, 0.22, progress),
+    focus: smooth(0.09, 0.24, progress),
     travel,
+    catch: smooth(0, 0.08, progress),
+    turn: smooth(0.24, 0.34, progress),
+    greet: smooth(0.8, 0.92, progress),
     passage: smooth(0.6, 1, travel),
     introOpacity: 1 - smooth(0, 0.035, progress),
     lineOpacity: 1 - smooth(0, 0.025, progress),

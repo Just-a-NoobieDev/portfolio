@@ -2581,17 +2581,18 @@ a:focus-visible .rolling > span {
 /* The line follows normal page flow and continues behind the next sections. */
 .signal-introduction {
   position: relative;
-  min-height: 900px;
+  min-height: 0;
   isolation: isolate;
 }
 .signal-sticky {
   position: relative;
-  min-height: 900px;
+  min-height: 0;
   isolation: isolate;
   overflow: clip;
 }
 .signal-content {
   padding-top: 60px;
+  padding-bottom: 32px;
 }
 .signal-copy-grid {
   display: grid;
@@ -2625,10 +2626,8 @@ a:focus-visible .rolling > span {
   font-size: 12px;
 }
 .signal-footnote {
-  position: absolute;
-  left: var(--gutter);
-  right: var(--gutter);
-  bottom: 35px;
+  position: relative;
+  margin-top: 36px;
   display: flex;
   justify-content: space-between;
   gap: 20px;
@@ -2796,10 +2795,10 @@ a:focus-visible .rolling > span {
 }
 @media (max-width: 760px) {
   .signal-introduction {
-    min-height: 1000px;
+    min-height: 0;
   }
   .signal-sticky {
-    min-height: 1000px;
+    min-height: 0;
   }
   .signal-content {
     padding-top: 30px;
@@ -2832,7 +2831,7 @@ a:focus-visible .rolling > span {
     font-size: 6px;
   }
   .signal-footnote {
-    bottom: 26px;
+    margin-top: 28px;
     font-size: 6px;
   }
   .signal-footnote span:last-child {
@@ -3158,7 +3157,6 @@ a:focus-visible .rolling > span {
 
 .page-line-flow {
   position: relative;
-  isolation: isolate;
   overflow: clip;
 }
 .page-line-flow > .signal-introduction,
@@ -3224,7 +3222,7 @@ a:focus-visible .rolling > span {
 .process-journey {
   height: 620svh;
   position: relative;
-  z-index: 1;
+  z-index: 4;
 }
 .process-sticky {
   position: sticky;
@@ -3243,8 +3241,13 @@ a:focus-visible .rolling > span {
     #e9edf7 50%,
     #f0f1f4 90%
   );
-  clip-path: url(#process-liquid-window);
-  z-index: 2;
+  clip-path: inset(
+    calc((1 - var(--process-focus, 0)) * 16%)
+      calc((1 - var(--process-focus, 0)) * 5%)
+      calc((1 - var(--process-focus, 0)) * 12%)
+      calc((1 - var(--process-focus, 0)) * 47%) round 24px
+  );
+  z-index: 1;
   will-change: clip-path;
 }
 .process-copy {
@@ -3256,7 +3259,6 @@ a:focus-visible .rolling > span {
   pointer-events: none;
 }
 .process-copy.process-intro {
-  z-index: 0;
   top: 22%;
   width: 40%;
   opacity: var(--process-intro, 1);
@@ -3441,5 +3443,129 @@ a:focus-visible .rolling > span {
     left: 5%;
     right: 5%;
     font-size: 7px;
+  }
+}
+
+/* One rendered surface expands from the line contact, without a blue border. */
+.process-ready .process-frame {
+  clip-path: none;
+  background: transparent;
+}
+@media (max-width: 760px) {
+  .process-frame {
+    clip-path: inset(
+      calc((1 - var(--process-focus, 0)) * 42%)
+        calc((1 - var(--process-focus, 0)) * 6%)
+        calc((1 - var(--process-focus, 0)) * 8%)
+        calc((1 - var(--process-focus, 0)) * 6%) round 24px
+    );
+  }
+  .process-ready .process-frame {
+    clip-path: none;
+  }
+}
+.hero-runway {
+  position: relative;
+  height: calc(var(--hero-height, 100svh) + 60svh);
+}
+.hero-runway > .hero {
+  min-height: 100svh;
+  position: sticky;
+  top: var(--hero-pin-top, 0px);
+}
+.hero-art[data-process-orb] {
+  user-select: none;
+}
+
+/* The hero flight shares coordinates and color with the continuing SVG stroke. */
+.hero-flight-thread {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2;
+  visibility: hidden;
+}
+.hero-flight-thread path {
+  fill: none;
+  stroke: #3655ff;
+  stroke-width: 12px;
+  stroke-linecap: round;
+}
+@media (max-width: 760px) {
+  .hero-flight-thread path {
+    stroke-width: 5px;
+  }
+}
+
+.product-rotate {
+  position: absolute;
+  inset: 25% 5% 18% 40%;
+  z-index: 6;
+  pointer-events: none;
+  touch-action: pan-y;
+}
+.product-rotate.active {
+  pointer-events: auto;
+  cursor: grab;
+}
+.product-rotate.is-dragging {
+  cursor: grabbing;
+}
+.product-rotate:focus-visible {
+  outline: 1px solid #3655ff;
+  outline-offset: 5px;
+  border-radius: 24px;
+}
+.product-controls {
+  position: absolute;
+  right: 6%;
+  bottom: 12%;
+  z-index: 7;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  font-size: 10px;
+  color: #606776;
+}
+.product-views {
+  display: flex;
+  gap: 12px;
+}
+.product-controls button {
+  font: inherit;
+  color: #606776;
+  background: none;
+  border: 0;
+  padding: 8px 0;
+  cursor: pointer;
+  text-transform: capitalize;
+  border-bottom: 1px solid transparent;
+}
+.product-controls button.current,
+.product-controls button:hover {
+  color: #3655ff;
+  border-color: #3655ff;
+}
+.product-controls .product-system {
+  color: #172345;
+}
+@media (max-width: 760px) {
+  .product-rotate {
+    inset: 43% 4% 20%;
+  }
+  .product-controls {
+    left: 6%;
+    right: 6%;
+    bottom: 15%;
+    gap: 12px;
+    flex-wrap: wrap;
+    font-size: 9px;
+  }
+  .product-controls > span {
+    display: none;
   }
 }

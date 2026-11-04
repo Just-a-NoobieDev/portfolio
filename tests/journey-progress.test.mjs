@@ -16,7 +16,7 @@ const { journeyProgress } = await import(
 test('the view expands before the bridge and camera journey develop', () => {
   assert.equal(journeyProgress(0).focus, 0)
   assert.equal(journeyProgress(0.1).travel, 0)
-  assert.equal(journeyProgress(0.22).focus, 1)
+  assert.equal(journeyProgress(0.24).focus, 1)
   assert.ok(journeyProgress(0.22).travel < 0.01)
   assert.equal(journeyProgress(0.22).passage, 0)
 })
@@ -52,4 +52,12 @@ test('the incoming line and preview copy clear before dark expansion starts', ()
       assert.equal(state.introOpacity, 0)
     }
   }
+})
+
+test('catch precedes expansion, exploration precedes the final wave', () => {
+  assert.equal(journeyProgress(0.08).catch, 1)
+  assert.equal(journeyProgress(0.08).focus, 0)
+  assert.equal(journeyProgress(0.24).travel, 0)
+  assert.equal(journeyProgress(0.78).greet, 0)
+  assert.equal(journeyProgress(1).greet, 1)
 })

@@ -13,17 +13,16 @@ const { processProgress } = await import(
   `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
 )
 
-test('the line reaches the preview and yields to the fluid front before restoring for Work', () => {
-  assert.equal(processProgress(0).lineOpacity, 1)
-  assert.equal(processProgress(0.035).lineOpacity, 1)
-  assert.ok(processProgress(0.06).lineOpacity > 0)
-  assert.equal(processProgress(0.085).lineOpacity, 0)
-  assert.equal(processProgress(0.035).introOpacity, 1)
-  assert.equal(processProgress(0.24).introOpacity, 0)
-  assert.equal(processProgress(0.035).focus, 0)
+test('upper-left arrival starts the reveal without a lower-box delay', () => {
+  assert.equal(processProgress(0).focus, 0)
+  assert.ok(processProgress(0.01).focus > 0)
+  assert.ok(processProgress(0.02).lineOpacity > 0)
+  assert.equal(processProgress(0.05).lineOpacity, 0)
+  assert.equal(processProgress(0).introOpacity, 1)
+  assert.equal(processProgress(0.065).introOpacity, 0)
   assert.equal(processProgress(0.24).focus, 1)
   assert.equal(processProgress(0.8).lineOpacity, 0)
-  assert.equal(processProgress(1).lineOpacity, 1)
+  assert.equal(processProgress(1).lineOpacity, 0)
 })
 test('planning precedes construction, and launch follows assembly', () => {
   assert.equal(processProgress(0.24).build, 0)

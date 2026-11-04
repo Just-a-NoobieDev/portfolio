@@ -1,21 +1,20 @@
 import * as THREE from 'three'
+import { createCarlCharacter } from './carl-character'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
 
 // Original, code-modeled miniature. No downloaded character or reference assets.
-export function createDeveloperDesk() {
+export function createDeveloperDesk({
+  screens = true,
+}: { screens?: boolean } = {}) {
   const group = new THREE.Group()
+  group.name = 'Carl_Developer_Workstation'
   const textures: THREE.CanvasTexture[] = []
   const material = (color: string, roughness = 0.45, metalness = 0) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness })
-  const navy = material('#263c7d'),
-    skin = material('#cc906b'),
-    hair = material('#171b25')
   const dark = material('#242a3b'),
     silver = material('#b3bdd0', 0.25, 0.75)
   const white = material('#f0eade'),
     blue = material('#3e55ef', 0.28)
-  const shoes = material('#e2e5ec'),
-    denim = material('#394354')
   function box(
     parent: THREE.Object3D,
     size: number[],
@@ -31,136 +30,17 @@ export function createDeveloperDesk() {
     parent.add(mesh)
     return mesh
   }
-  function ellipsoid(
-    parent: THREE.Object3D,
-    size: number[],
-    at: number[],
-    mat: THREE.Material,
-  ) {
-    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 28, 20), mat)
-    mesh.scale.set(size[0]!, size[1]!, size[2]!)
-    mesh.position.set(at[0]!, at[1]!, at[2]!)
-    parent.add(mesh)
-    return mesh
-  }
-  function limb(
-    parent: THREE.Object3D,
-    from: number[],
-    to: number[],
-    radius: number,
-    mat: THREE.Material,
-  ) {
-    const start = new THREE.Vector3(...(from as [number, number, number]))
-    const end = new THREE.Vector3(...(to as [number, number, number]))
-    const mesh = new THREE.Mesh(
-      new THREE.CapsuleGeometry(
-        radius,
-        Math.max(0.01, start.distanceTo(end) - radius * 2),
-        5,
-        12,
-      ),
-      mat,
-    )
-    mesh.position.copy(start).lerp(end, 0.5)
-    mesh.quaternion.setFromUnitVectors(
-      new THREE.Vector3(0, 1, 0),
-      end.sub(start).normalize(),
-    )
-    parent.add(mesh)
-    return mesh
-  }
-  // A small architectural stage keeps the silhouette grounded at every angle.
-  const stage = new THREE.Mesh(
-    new THREE.CylinderGeometry(2.75, 2.75, 0.13, 80),
-    material('#e1e5f1'),
-  )
-  stage.position.y = -1.75
-  group.add(stage)
-  const rim = new THREE.Mesh(new THREE.TorusGeometry(2.72, 0.015, 6, 100), blue)
-  rim.rotation.x = Math.PI / 2
-  rim.position.y = -1.675
-  group.add(rim)
-  box(group, [4.3, 0.16, 1.8], [0, -0.05, 0.5], white, 0.07)
-  for (const x of [-1.8, 1.8]) {
-    box(group, [0.11, 1.5, 0.11], [x, -0.85, 0.1], silver)
-    box(group, [0.11, 1.5, 0.11], [x, -0.85, 1.05], silver)
-    box(group, [0.6, 0.06, 1.35], [x, -1.6, 0.5], dark)
-  }
-  // Chair, seated figure, tapered limbs, sculpted hair and facial features.
-  box(group, [1, 0.16, 0.9], [0, -0.52, -0.6], dark)
-  box(group, [1.05, 1.1, 0.17], [0, 0.02, -1.05], navy, 0.08)
-  limb(group, [0, -0.6, -0.6], [0, -1.55, -0.6], 0.065, silver)
-  for (let i = 0; i < 5; i++) {
-    const a = (i * Math.PI * 2) / 5
-    const end = [Math.cos(a) * 0.65, -1.58, -0.6 + Math.sin(a) * 0.65]
-    limb(group, [0, -1.45, -0.6], end, 0.035, silver)
-    ellipsoid(group, [0.085, 0.08, 0.085], end, dark)
-  }
-  const person = new THREE.Group()
-  group.add(person)
-  ellipsoid(person, [0.48, 0.65, 0.29], [0, 0.24, -0.62], navy)
-  box(person, [0.74, 0.22, 0.65], [0, -0.4, -0.46], denim, 0.09)
-  limb(person, [0, 0.72, -0.58], [0, 1.04, -0.55], 0.15, skin)
-  const head = new THREE.Group()
-  head.position.set(0, 1.27, -0.51)
-  head.rotation.x = 0.08
-  person.add(head)
-  ellipsoid(head, [0.35, 0.43, 0.32], [0, 0, 0], skin)
-  ellipsoid(head, [0.37, 0.29, 0.33], [0, 0.24, -0.05], hair)
-  ellipsoid(head, [0.29, 0.14, 0.2], [-0.08, 0.4, 0.05], hair).rotation.z = -0.2
-  for (const x of [-0.34, 0.34])
-    ellipsoid(head, [0.065, 0.11, 0.065], [x, -0.02, 0], skin)
-  for (const x of [-0.12, 0.12]) {
-    ellipsoid(head, [0.035, 0.045, 0.025], [x, 0.02, 0.302], dark)
-    box(head, [0.09, 0.025, 0.03], [x, 0.12, 0.29], hair, 0.01)
-  }
-  ellipsoid(head, [0.055, 0.07, 0.075], [0, -0.045, 0.31], skin)
-  box(head, [0.12, 0.025, 0.02], [0, -0.17, 0.29], material('#8b5343'), 0.01)
-  const hands: THREE.Group[] = []
-  for (const sign of [-1, 1]) {
-    limb(
-      person,
-      [sign * 0.38, 0.55, -0.57],
-      [sign * 0.63, 0.13, -0.15],
-      0.15,
-      navy,
-    )
-    limb(
-      person,
-      [sign * 0.63, 0.13, -0.15],
-      [sign * 0.33, 0.12, 0.42],
-      0.105,
-      skin,
-    )
-    const hand = new THREE.Group()
-    hand.position.set(sign * 0.33, 0.13, 0.46)
-    person.add(hand)
-    ellipsoid(hand, [0.13, 0.055, 0.15], [0, 0, 0], skin)
-    hands.push(hand)
-    for (let i = 0; i < 4; i++)
-      limb(
-        hand,
-        [-0.075 + i * 0.045, 0, 0.06],
-        [-0.075 + i * 0.045, -0.015, 0.18],
-        0.018,
-        skin,
-      )
-    limb(
-      person,
-      [sign * 0.22, -0.42, -0.5],
-      [sign * 0.26, -0.65, 0.2],
-      0.17,
-      denim,
-    )
-    limb(
-      person,
-      [sign * 0.26, -0.65, 0.2],
-      [sign * 0.27, -1.45, 0.18],
-      0.13,
-      denim,
-    )
-    box(person, [0.32, 0.18, 0.55], [sign * 0.27, -1.5, 0.32], shoes, 0.07)
-  }
+  const desk = new THREE.Group()
+  desk.name = 'Ivory_desk'
+  group.add(desk)
+  box(desk, [4.3, 0.12, 1.8], [0, -0.05, 0.5], white, 0.04)
+  for (const x of [-1.88, 1.88])
+    for (const z of [-0.12, 1.13]) {
+      box(desk, [0.09, 1.48, 0.09], [x, -0.85, z], silver, 0.012)
+      box(desk, [0.095, 0.045, 0.095], [x, -1.61, z], dark, 0.008)
+    }
+  const character = createCarlCharacter()
+  group.add(character.group)
   function screenTexture(isOrb: boolean) {
     const canvas = document.createElement('canvas')
     canvas.width = 768
@@ -179,7 +59,7 @@ export function createDeveloperDesk() {
     c.font = '18px monospace'
     c.fillStyle = '#9baad5'
     c.fillText(
-      isOrb ? 'preview / a little possibility' : 'carl / build-something.ts',
+      isOrb ? 'build-something.ts / live preview' : 'carl / build-something.ts',
       115,
       28,
     )
@@ -202,9 +82,30 @@ export function createDeveloperDesk() {
         c.fillText(line, 46 + (i === 3 || i === 4 ? 20 : 0), 92 + i * 36)
       })
     else {
+      c.fillStyle = '#0d162d'
+      c.fillRect(0, 43, 310, 437)
+      c.font = '16px monospace'
+      const source = [
+        'const orb = createOrb({',
+        '  color: "#3655ff",',
+        '  light: curiosity,',
+        '  motion: true',
+        '})',
+        '',
+        'scene.add(orb)',
+        '',
+        'function animate(t) {',
+        '  orb.rotate(t)',
+        '  render(scene)',
+        '}',
+      ]
+      source.forEach((line, i) => {
+        c.fillStyle = i % 2 ? '#9bd8c5' : '#a9b8ff'
+        c.fillText(line, 22, 86 + i * 26)
+      })
       c.strokeStyle = '#365082'
       c.lineWidth = 1
-      for (let x = 50; x < 768; x += 45) {
+      for (let x = 325; x < 768; x += 45) {
         c.beginPath()
         c.moveTo(x, 65)
         c.lineTo(x, 410)
@@ -212,13 +113,13 @@ export function createDeveloperDesk() {
       }
       for (let y = 65; y < 415; y += 45) {
         c.beginPath()
-        c.moveTo(30, y)
+        c.moveTo(325, y)
         c.lineTo(735, y)
         c.stroke()
       }
       c.fillStyle = '#91a7f5'
       c.font = '16px monospace'
-      c.fillText('ONE IDEA. ENDLESS POSSIBILITIES.', 202, 445)
+      c.fillText('LIVE PREVIEW', 480, 445)
     }
     const texture = new THREE.CanvasTexture(canvas)
     texture.colorSpace = THREE.SRGBColorSpace
@@ -227,26 +128,30 @@ export function createDeveloperDesk() {
   }
   // Two readable, emissive displays; the live orb is rendered over the preview.
   const monitor = new THREE.Group()
-  monitor.position.set(1.15, 0.83, 0.37)
-  monitor.rotation.y = -0.16
+  monitor.name = 'Second_monitor'
+  monitor.position.set(1.45, 0.83, 1.0)
+  monitor.rotation.y = -1.45
   group.add(monitor)
   box(monitor, [1.65, 1.06, 0.09], [0, 0, 0], dark)
   box(monitor, [0.09, 0.34, 0.1], [0, -0.67, 0], silver)
   box(monitor, [0.65, 0.04, 0.4], [0, -0.85, 0], silver)
   const screenMat = (orb: boolean) =>
     new THREE.MeshBasicMaterial({
-      map: screenTexture(orb),
-      side: THREE.DoubleSide,
+      map: screens ? screenTexture(orb) : null,
+      color: screens ? '#ffffff' : '#18253f',
+      side: THREE.FrontSide,
     })
   const display = new THREE.Mesh(
     new THREE.PlaneGeometry(1.51, 0.94),
     screenMat(true),
   )
+  display.name = 'Monitor_screen'
   display.position.z = 0.052
   monitor.add(display)
   const laptop = new THREE.Group()
-  laptop.position.set(-1.04, 0.1, 0.65)
-  laptop.rotation.y = 0.2
+  laptop.name = 'Laptop'
+  laptop.position.set(-0.45, 0.1, 0.5)
+  laptop.rotation.y = Math.PI
   group.add(laptop)
   box(laptop, [1.45, 0.065, 0.95], [0, 0, 0], silver)
   const lid = new THREE.Group()
@@ -258,44 +163,64 @@ export function createDeveloperDesk() {
     new THREE.PlaneGeometry(1.33, 0.82),
     screenMat(false),
   )
+  laptopDisplay.name = 'Laptop_screen'
   laptopDisplay.position.z = 0.033
   lid.add(laptopDisplay)
-  // A second keyboard at the hands makes the coding motion legible.
-  box(group, [1.05, 0.04, 0.45], [0, 0.055, 0.57], dark)
+  // The keyboard and both typing targets share the laptop transform.
+  box(laptop, [1.05, 0.025, 0.4], [0, 0.045, 0.12], dark)
   for (let row = 0; row < 4; row++)
     for (let col = 0; col < 12; col++)
       box(
-        group,
+        laptop,
         [0.063, 0.015, 0.055],
-        [-0.44 + col * 0.08, 0.085, 0.42 + row * 0.09],
+        [-0.44 + col * 0.08, 0.065, -0.01 + row * 0.08],
         silver,
         0.006,
       )
+  group.updateMatrixWorld(true)
+  character.setTypingTargets(
+    character.group.worldToLocal(
+      laptop.localToWorld(new THREE.Vector3(0.22, 0.12, 0.23)),
+    ),
+    character.group.worldToLocal(
+      laptop.localToWorld(new THREE.Vector3(-0.22, 0.12, 0.23)),
+    ),
+  )
+  character.animate(0, 0)
   const mug = new THREE.Mesh(
     new THREE.CylinderGeometry(0.13, 0.11, 0.3, 24),
     blue,
   )
-  mug.position.set(1.87, 0.18, 0.85)
+  mug.name = 'Coffee_beside_the_laptop'
+  mug.position.set(0.65, 0.18, 1.1)
   group.add(mug)
   const handle = new THREE.Mesh(
     new THREE.TorusGeometry(0.095, 0.025, 8, 20),
     blue,
   )
-  handle.position.set(2, 0.2, 0.85)
+  handle.position.set(0.79, 0.2, 1.1)
   group.add(handle)
+  const coffee = new THREE.Mesh(
+    new THREE.CircleGeometry(0.112, 24),
+    material('#382016', 0.3),
+  )
+  coffee.rotation.x = -Math.PI / 2
+  coffee.position.set(0.65, 0.332, 1.1)
+  group.add(coffee)
   const orbOrigin = new THREE.Object3D()
-  orbOrigin.position.set(0, 0, 0.23)
+  orbOrigin.position.set(0.28, 0, 0.23)
   monitor.add(orbOrigin)
+  const orbHandoff = character.reachAnchor
   return {
     group,
     orbOrigin,
-    animate(time: number) {
-      hands.forEach((hand, i) => {
-        hand.position.y = 0.13 + Math.sin(time * 7 + i * 2) * 0.012
-        hand.rotation.x = Math.sin(time * 7 + i) * 0.04
-      })
-      head.rotation.y = Math.sin(time * 0.45) * 0.065
-      person.scale.y = 1 + Math.sin(time * 1.8) * 0.003
+    orbHandoff,
+    lookAtOrb(target: THREE.Vector3, delta: number, tracking: number) {
+      const focus = laptopDisplay.getWorldPosition(new THREE.Vector3())
+      character.lookAtOrb(focus.lerp(target, tracking), delta)
+    },
+    animate(time: number, release = 0) {
+      character.animate(time, release)
     },
     dispose() {
       textures.forEach((texture) => texture.dispose())

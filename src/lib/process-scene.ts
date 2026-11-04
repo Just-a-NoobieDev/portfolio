@@ -1,6 +1,9 @@
 import * as THREE from 'three'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js'
+import { heroHandoff } from './hero-handoff'
+import { createProcessWindow } from './process-window'
+import { createFinishedExperience } from './finished-experience'
 import { createDeveloperDesk } from './developer-desk'
 import { processProgress, smooth } from './process-progress'
 import { orbContinuity } from './orb-continuity'
@@ -22,6 +25,7 @@ export function createProcessExperience(
   renderer.toneMapping = THREE.NeutralToneMapping
   renderer.domElement.setAttribute('aria-hidden', 'true')
   host.appendChild(renderer.domElement)
+  const processWindow = createProcessWindow(renderer)
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100)
   camera.position.z = 10
   const processCamera = camera.clone()
@@ -59,15 +63,6 @@ export function createProcessExperience(
     metalness: 0.15,
     roughness: 0.25,
     clearcoat: 1,
-  })
-  const glass = new THREE.MeshPhysicalMaterial({
-    color: '#a5bbff',
-    metalness: 0.15,
-    roughness: 0.15,
-    transparent: true,
-    opacity: 0.38,
-    depthWrite: false,
-    side: THREE.DoubleSide,
   })
   const traceMaterial = new THREE.LineBasicMaterial({
     color: '#3158f1',
@@ -115,7 +110,9 @@ export function createProcessExperience(
   // Physical layers: experience, logic, and data. Each has a distinct structure.
   const machine = new THREE.Group()
   world.add(machine)
+  const finished = createFinishedExperience()
   const decks: THREE.Group[] = []
+  const deckDetails: THREE.Group[] = []
   const deckTargets = [-1.15, 0, 1.15]
   const labelTextures: THREE.CanvasTexture[] = []
   function label(text: string, color = '#2845a0') {
@@ -150,22 +147,11 @@ export function createProcessExperience(
   }
   for (let i = 0; i < 3; i++) {
     const deck = new THREE.Group()
-    const slab = new THREE.Mesh(
-      new RoundedBoxGeometry(3.65, 0.16, 2.5, 3, 0.07),
-      i === 1 ? chrome : porcelain,
-    )
-    deck.add(slab)
-    const lid = new THREE.Mesh(
-      new RoundedBoxGeometry(3.45, 0.055, 2.3, 2, 0.025),
-      glass,
-    )
-    lid.position.y = 0.16
-    deck.add(lid)
-    const edge = new THREE.LineSegments(
-      new THREE.EdgesGeometry(slab.geometry),
-      traceMaterial,
-    )
-    deck.add(edge)
+    // These very same panels become the finished enclosure; no replacement mesh.
+    deck.add(finished.layers[i]!)
+    const details = new THREE.Group()
+    deck.add(details)
+    deckDetails.push(details)
     const chip = new THREE.Mesh(
       new RoundedBoxGeometry(
         i === 1 ? 1.1 : 0.85,
@@ -177,7 +163,7 @@ export function createProcessExperience(
       blue,
     )
     chip.position.y = 0.23
-    deck.add(chip)
+    details.add(chip)
     for (let j = 0; j < 12; j++) {
       const angle = (j * Math.PI) / 6
       const pin = new THREE.Mesh(
@@ -186,7 +172,7 @@ export function createProcessExperience(
       )
       pin.position.set(Math.cos(angle) * 0.76, 0.15, Math.sin(angle) * 0.76)
       pin.rotation.y = -angle + Math.PI / 2
-      deck.add(pin)
+      details.add(pin)
     }
     for (const sign of [-1, 1]) {
       const channel = new THREE.Mesh(
@@ -194,14 +180,14 @@ export function createProcessExperience(
         blue,
       )
       channel.position.set(sign * 1.22, 0.12, 0.4 * (i - 1))
-      deck.add(channel)
+      details.add(channel)
       const node = new THREE.Mesh(new THREE.SphereGeometry(0.07, 12, 8), blue)
       node.position.set(sign * 1.65, 0.15, 0.4 * (i - 1))
-      deck.add(node)
+      details.add(node)
     }
     const caption = label(['DATA', 'APPLICATION LOGIC', 'EXPERIENCE'][i]!)
     caption.position.set(2.65, 0.1, 0)
-    deck.add(caption)
+    details.add(caption)
     machine.add(deck)
     decks.push(deck)
   }
@@ -226,6 +212,29 @@ export function createProcessExperience(
   )
   scan.rotation.x = Math.PI / 2
   machine.add(scan)
+  const technicalMaterials: { material: THREE.Material; opacity: number }[] = []
+  const fadingMaterials = new Map<THREE.Material, THREE.Material>()
+  // Clones let the construction fade without fading the shared orb.
+  for (const root of [...deckDetails, ...supports, scan, blueprint])
+    root.traverse((object) => {
+      if (!(
+        object instanceof THREE.Mesh ||
+        object instanceof THREE.Line ||
+        object instanceof THREE.Sprite
+      ))
+        return
+      const fade = (source: THREE.Material) => {
+        if (fadingMaterials.has(source)) return fadingMaterials.get(source)!
+        const material = source.clone()
+        material.transparent = true
+        fadingMaterials.set(source, material)
+        technicalMaterials.push({ material, opacity: source.opacity })
+        return material
+      }
+      object.material = Array.isArray(object.material)
+        ? object.material.map(fade)
+        : fade(object.material)
+    })
 
   const questionNodes: THREE.Mesh[] = []
   const tangled: THREE.Line[] = []
@@ -298,12 +307,30 @@ export function createProcessExperience(
 
   const heroAnchor = story.querySelector<HTMLElement>('[data-process-orb]')!
   const heroSection = heroAnchor.closest('section')!
+  const heroRunway = heroSection.parentElement!
+  let heroPinTop = 0,
+    pinDistance = 1,
+    layoutFrame = 0
   const flow = story.querySelector<HTMLElement>('.page-line-flow')!
   const section = story.querySelector<HTMLElement>('#process')!
   const sticky = section.querySelector<HTMLElement>('.process-sticky')!
   const frameHost = section.querySelector<HTMLElement>('.process-frame')!
   const closing = story.querySelector<HTMLElement>('#connection')!
   const stroke = flow.querySelector<SVGPathElement>('.scroll-thread path')!
+  const flightSvg = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'svg',
+  )
+  flightSvg.classList.add('hero-flight-thread')
+  flightSvg.setAttribute('aria-hidden', 'true')
+  const flightStroke = document.createElementNS(
+    'http://www.w3.org/2000/svg',
+    'path',
+  )
+  flightSvg.appendChild(flightStroke)
+  story.appendChild(flightSvg)
+  let launchLocal: THREE.Vector3 | undefined
+
   let width = 1,
     height = 1,
     viewportTop = 0,
@@ -319,7 +346,7 @@ export function createProcessExperience(
   let dragging = false,
     dragX = 0,
     dragY = 0
-  const rotation = { yaw: -0.38, pitch: 0.12 }
+  const rotation = { yaw: 0.35, pitch: 0.16 }
   const easedRotation = { ...rotation }
   const down = (event: PointerEvent) => {
     if (event.button !== 0) return
@@ -331,11 +358,15 @@ export function createProcessExperience(
   }
   const drag = (event: PointerEvent) => {
     if (!dragging) return
-    rotation.yaw += (event.clientX - dragX) * 0.009
+    rotation.yaw = THREE.MathUtils.clamp(
+      rotation.yaw + (event.clientX - dragX) * 0.005,
+      0.15,
+      0.75,
+    )
     rotation.pitch = THREE.MathUtils.clamp(
       rotation.pitch + (event.clientY - dragY) * 0.004,
-      -0.12,
-      0.55,
+      0.06,
+      0.28,
     )
     dragX = event.clientX
     dragY = event.clientY
@@ -347,11 +378,15 @@ export function createProcessExperience(
   const key = (event: KeyboardEvent) => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault()
-      rotation.yaw += event.key === 'ArrowRight' ? 0.3 : -0.3
+      rotation.yaw = THREE.MathUtils.clamp(
+        rotation.yaw + (event.key === 'ArrowRight' ? 0.15 : -0.15),
+        0.15,
+        0.75,
+      )
     } else if (event.key === 'Home') {
       event.preventDefault()
-      rotation.yaw = -0.38
-      rotation.pitch = 0.12
+      rotation.yaw = 0.35
+      rotation.pitch = 0.16
     }
   }
   heroAnchor.addEventListener('pointerdown', down)
@@ -360,10 +395,85 @@ export function createProcessExperience(
   heroAnchor.addEventListener('pointercancel', up)
   heroAnchor.addEventListener('lostpointercapture', up)
   heroAnchor.addEventListener('keydown', key)
+  const productControl = section.querySelector<HTMLElement>(
+    '[data-product-rotate]',
+  )!
+  const explore = { yaw: 0, pitch: 0, easedYaw: 0, easedPitch: 0, side: 0 }
+  let productDragging = false,
+    productX = 0,
+    productY = 0
+  const productDown = (event: PointerEvent) => {
+    if (event.button !== 0) return
+    productDragging = true
+    productX = event.clientX
+    productY = event.clientY
+    productControl.setPointerCapture(event.pointerId)
+    productControl.classList.add('is-dragging')
+  }
+  const productMove = (event: PointerEvent) => {
+    if (!productDragging) return
+    explore.yaw = THREE.MathUtils.clamp(
+      explore.yaw + (event.clientX - productX) * 0.007,
+      -Math.PI * 2,
+      Math.PI * 2,
+    )
+    explore.pitch = THREE.MathUtils.clamp(
+      explore.pitch + (event.clientY - productY) * 0.004,
+      -0.45,
+      0.45,
+    )
+    productX = event.clientX
+    productY = event.clientY
+    productControl.setAttribute(
+      'aria-valuenow',
+      String(Math.round((explore.yaw * 180) / Math.PI)),
+    )
+  }
+  const productUp = () => {
+    productDragging = false
+    productControl.classList.remove('is-dragging')
+  }
+  const productKey = (event: KeyboardEvent) => {
+    if (['ArrowLeft', 'ArrowRight', 'Home'].includes(event.key)) {
+      event.preventDefault()
+      explore.yaw =
+        event.key === 'Home'
+          ? 0
+          : THREE.MathUtils.clamp(
+              explore.yaw + (event.key === 'ArrowRight' ? 0.15 : -0.15),
+              -Math.PI * 2,
+              Math.PI * 2,
+            )
+      if (event.key === 'Home') explore.pitch = 0
+      productControl.setAttribute(
+        'aria-valuenow',
+        String(Math.round((explore.yaw * 180) / Math.PI)),
+      )
+    }
+  }
+  productControl.addEventListener('pointerdown', productDown)
+  productControl.addEventListener('pointermove', productMove)
+  productControl.addEventListener('pointerup', productUp)
+  productControl.addEventListener('pointercancel', productUp)
+  productControl.addEventListener('lostpointercapture', productUp)
+  productControl.addEventListener('keydown', productKey)
   const measure = () => {
     width = host.clientWidth
     height = host.clientHeight
     renderer.setSize(width, height, false)
+    processWindow.resize(width, height)
+    const heroHeight = heroSection.offsetHeight
+    heroPinTop = Math.min(0, height - heroHeight)
+    pinDistance = height * 0.95
+    const previous = heroRunway.style.getPropertyValue('--hero-height')
+    heroRunway.style.setProperty('--hero-height', `${heroHeight}px`)
+    heroRunway.style.setProperty('--hero-pin-top', `${heroPinTop}px`)
+    if (previous !== `${heroHeight}px`) {
+      cancelAnimationFrame(layoutFrame)
+      layoutFrame = requestAnimationFrame(() =>
+        window.dispatchEvent(new Event('hero-layout')),
+      )
+    }
     for (const cam of [camera, processCamera]) {
       cam.aspect = width / height
       cam.updateProjectionMatrix()
@@ -372,6 +482,7 @@ export function createProcessExperience(
   }
   const resize = new ResizeObserver(measure)
   resize.observe(host)
+  resize.observe(heroSection)
   resize.observe(section)
   resize.observe(closing)
   const intersection = new IntersectionObserver(([entry]) => {
@@ -387,6 +498,7 @@ export function createProcessExperience(
       (height / 2 - (y - viewportTop)) * unit(),
       0,
     )
+  let easedRelease: number | undefined
   const render = (now: number) => {
     if (disposed) return
     animation = requestAnimationFrame(render)
@@ -396,6 +508,7 @@ export function createProcessExperience(
       renderer.clear()
       return
     }
+    const delta = Math.min(0.05, (now - last) / 1000)
     last = now
     const t = now / 1000
     const p = Number(section.style.getPropertyValue('--process-progress')) || 0
@@ -413,9 +526,14 @@ export function createProcessExperience(
     renderer.setScissorTest(false)
     renderer.clear()
     const anchor = heroAnchor.getBoundingClientRect()
-    const heroScale = (Math.min(anchor.width, anchor.height) * unit()) / 5.8
+    const heroScale =
+      (Math.min(anchor.width, anchor.height) * unit()) /
+      (width <= 760 ? 4.7 : 4.2)
     hero.position.copy(
-      screen(anchor.left + anchor.width / 2, anchor.top + anchor.height / 2),
+      screen(
+        anchor.left + anchor.width / 2 - (width <= 760 ? 0 : width * 0.04),
+        anchor.top + anchor.height / 2 - (width <= 760 ? 0 : height * 0.06),
+      ),
     )
     hero.scale.setScalar(heroScale)
     easedRotation.yaw = THREE.MathUtils.lerp(
@@ -443,14 +561,18 @@ export function createProcessExperience(
         ),
       ),
     )
-    developer.animate(t)
-    hero.updateMatrixWorld(true)
-    const release = smooth(
+    const release = THREE.MathUtils.clamp(
+      (heroPinTop - heroRunway.getBoundingClientRect().top) / pinDistance,
       0,
-      Math.max(80, heroSection.offsetHeight - height * 0.65 - 40),
-      -heroSection.getBoundingClientRect().top - 40,
+      1,
     )
-    if (anchor.bottom > 0) renderer.render(heroScene, camera)
+    easedRelease =
+      easedRelease === undefined
+        ? release
+        : THREE.MathUtils.damp(easedRelease, release, 10, delta)
+    developer.animate(t, easedRelease)
+    hero.updateMatrixWorld(true)
+
     const length =
       Number(stroke.getAttribute('stroke-dasharray')?.split(' ')[0]) || 0
     const offset = Number(stroke.getAttribute('stroke-dashoffset'))
@@ -464,12 +586,93 @@ export function createProcessExperience(
     const tip = screen(point.x + flowRect.left, point.y + flowRect.top)
     // The actual preview orb leaves the monitor, then joins the measured SVG tip.
     const origin = developer.orbOrigin.getWorldPosition(new THREE.Vector3())
-    orb.position.copy(origin).lerp(tip, release)
-    orb.position.y += Math.sin(release * Math.PI) * heroScale * 0.55
-    orb.position.z += Math.sin(release * Math.PI) * heroScale * 1.2
+    const handoff = heroHandoff(easedRelease)
+    const palm = developer.orbHandoff.getWorldPosition(new THREE.Vector3())
+    const arrival = palm.clone()
+    arrival.y = Math.max(origin.y, palm.y)
+    orb.position.copy(origin).lerp(arrival, handoff.emerge)
+    orb.position.y += Math.sin(handoff.emerge * Math.PI) * heroScale * 0.14
+    // The drawn flight and the orb use the same cubic, including its exact prefix.
+    flightSvg.style.visibility =
+      handoff.depart > 0 && flowRect.top > -height ? 'visible' : 'hidden'
+    if (handoff.depart <= 0) launchLocal = undefined
+    if (handoff.depart > 0) {
+      if (!launchLocal) launchLocal = hero.worldToLocal(palm.clone())
+      const flightStart = hero.localToWorld(launchLocal.clone())
+      const project = (value: THREE.Vector3) => {
+        const p = value.clone().project(camera)
+        return new THREE.Vector2(
+          ((p.x + 1) * width) / 2,
+          ((1 - p.y) * height) / 2 + viewportTop,
+        )
+      }
+      const from = project(flightStart)
+      const beginning = stroke.getPointAtLength(0)
+      const finish = new THREE.Vector2(
+        beginning.x + flowRect.left,
+        beginning.y + flowRect.top,
+      )
+      const outsideX = width - (mobile ? 18 : 30)
+      const exit = new THREE.Vector2(outsideX, from.y + height * 0.12)
+      const curves = [
+        [
+          from,
+          new THREE.Vector2(from.x + width * 0.14, from.y - 24),
+          new THREE.Vector2(outsideX, from.y - 24),
+          exit,
+        ],
+        [
+          exit,
+          new THREE.Vector2(outsideX, exit.y + height * 0.22),
+          new THREE.Vector2(finish.x + width * 0.14, finish.y),
+          finish,
+        ],
+      ]
+      const q = handoff.depart > 0.999 ? 1 : handoff.depart
+      const storyTop = story.getBoundingClientRect().top
+      let path = `M${from.x} ${from.y - storyTop}`
+      let drawnTip = from.clone()
+      for (let i = 0; i < curves.length; i++) {
+        const local = THREE.MathUtils.clamp(
+          (q - (i === 0 ? 0 : 0.42)) / (i === 0 ? 0.42 : 0.58),
+          0,
+          1,
+        )
+        if (local === 0) break
+        const [p0, p1, p2, p3] = curves[i]!
+        const first = p0!.clone().lerp(p1!, local),
+          second = p1!.clone().lerp(p2!, local),
+          third = p2!.clone().lerp(p3!, local)
+        const control = first.clone().lerp(second, local),
+          next = second.clone().lerp(third, local)
+        drawnTip = control.clone().lerp(next, local)
+        path += ` C${first.x} ${first.y - storyTop} ${control.x} ${control.y - storyTop} ${drawnTip.x} ${drawnTip.y - storyTop}`
+      }
+      orb.position.copy(q === 1 ? tip : screen(drawnTip.x, drawnTip.y))
+      flightStroke.setAttribute('d', path)
+    }
+    developer.lookAtOrb(orb.position, delta, smooth(0.13, 0.24, easedRelease))
+    if (anchor.bottom > 0) renderer.render(heroScene, camera)
+    layer.dataset.heroRelease = release.toFixed(3)
+    layer.dataset.heroDepart = handoff.depart.toFixed(3)
+    const projectedHand = palm.clone().project(camera)
+    layer.dataset.handX = String(
+      Math.round(((projectedHand.x + 1) * width) / 2),
+    )
+    layer.dataset.handY = String(
+      Math.round(((1 - projectedHand.y) * height) / 2 + viewportTop),
+    )
     const pathSize = ((mobile ? 11 : 15) * unit()) / 0.64
     orb.scale.setScalar(
-      THREE.MathUtils.lerp(heroScale * 0.29, pathSize, release),
+      THREE.MathUtils.lerp(
+        THREE.MathUtils.lerp(
+          heroScale * 0.29,
+          heroScale * 0.32,
+          handoff.emerge,
+        ),
+        pathSize,
+        handoff.depart,
+      ),
     )
     halo.rotation.y = t * 0.35
     halo.rotation.z = t * 0.14
@@ -484,13 +687,15 @@ export function createProcessExperience(
         (mobile
           ? (width * unit()) / 7.8
           : Math.min(0.9, (width * unit()) / 13)) *
-        (0.72 + focus * 0.28)
+        (0.72 + focus * 0.28) *
+        (1 + smooth(0.7, 0.93, p) * 0.15)
       world.scale.setScalar(scale)
+      const completion = smooth(0.7, 0.93, p)
       const tilt = smooth(0.24, 0.46, p)
       const orbitAngle = smooth(0.44, 0.85, p) * 0.35
       processCamera.position.set(
         Math.sin(orbitAngle) * 8,
-        tilt * 3.5,
+        tilt * (3.5 - completion * 2.3),
         10 - tilt * 1.5,
       )
       processCamera.lookAt(0, 0, 0)
@@ -510,9 +715,31 @@ export function createProcessExperience(
       world.position.copy(
         positionInProcessCamera(
           (left + width - right) / 2 + (mobile ? 0 : width * 0.11) * focus,
-          sceneTop + (top + height - bottom) / 2 + (mobile ? 100 : 75) * focus,
+          sceneTop + (top + height - bottom) / 2 + (mobile ? 70 : 45) * focus,
         ),
       )
+      const constructionOpacity = 1 - smooth(0.7, 0.83, p)
+      finished.setProgress(completion)
+      finished.setView(section.dataset.productView || 'overview')
+      const systemView = section.dataset.productSide === 'system' ? 1 : 0
+      explore.side = THREE.MathUtils.damp(explore.side, systemView, 6, delta)
+      explore.easedYaw = THREE.MathUtils.damp(
+        explore.easedYaw,
+        explore.yaw,
+        9,
+        delta,
+      )
+      explore.easedPitch = THREE.MathUtils.damp(
+        explore.easedPitch,
+        explore.pitch,
+        9,
+        delta,
+      )
+      machine.rotation.y = completion * (explore.easedYaw + explore.side * 0.75)
+      machine.rotation.x = completion * explore.easedPitch
+      machine.rotation.z = -completion * 0.015
+      for (const item of technicalMaterials)
+        item.material.opacity = item.opacity * constructionOpacity
       const ideaOpacity = 1 - motion.plan
       ideas.visible = ideaOpacity > 0.01
       ideas.scale.setScalar(0.1 + ideaOpacity * 0.9)
@@ -527,7 +754,7 @@ export function createProcessExperience(
       }
       for (const line of tangled)
         (line.material as THREE.LineBasicMaterial).opacity = ideaOpacity * 0.4
-      blueprint.visible = motion.plan > 0.01
+      blueprint.visible = motion.plan > 0.01 && constructionOpacity > 0.001
       blueprint.scale.setScalar(0.6 + motion.plan * 0.4)
       machine.visible = motion.plan > 0.01
       machine.scale.setScalar(0.15 + motion.plan * 0.85)
@@ -535,51 +762,60 @@ export function createProcessExperience(
         const deck = decks[i]!
         deck.position.set(
           (1 - motion.build) * (i - 1) * 2.2,
-          -1.5 + (deckTargets[i]! + 1.5) * motion.build,
-          (1 - motion.build) * (i - 1) * 0.6,
+          THREE.MathUtils.lerp(
+            -1.5 + (deckTargets[i]! + 1.5) * motion.build,
+            0.1,
+            completion,
+          ),
+          (1 - motion.build) * (i - 1) * 0.6 +
+            completion * (i - 1) * (0.28 + explore.side * 0.9),
         )
         deck.rotation.y = (1 - motion.build) * (i - 1) * 0.35
+        deck.rotation.x = (completion * Math.PI) / 2
         deck.scale.set(1, 0.04 + motion.build * 0.96, 1)
+        const detail = deckDetails[i]!
+        detail.position.y = -completion * 0.22
+        detail.scale.setScalar(Math.max(0.001, 1 - smooth(0, 0.65, completion)))
+        detail.visible = completion < 0.65
       }
-      for (const support of supports) support.scale.y = motion.build
+      for (const support of supports) {
+        support.scale.y = motion.build * (1 - completion)
+        support.visible = completion < 0.95
+      }
       scan.visible = motion.launch > 0 && motion.launch < 0.95
       scan.position.y = -1.5 + motion.launch * 3.2
       for (let i = 0; i < tubes.length; i++) {
         tubes[i]!.visible = motion.build > 0.45
         ;(tubes[i]!.material as THREE.MeshBasicMaterial).opacity =
-          motion.build * 0.5
+          motion.build * 0.5 * constructionOpacity
       }
       for (let i = 0; i < packets.length; i++) {
-        packets[i]!.visible = motion.launch > 0.15
+        packets[i]!.visible = motion.launch > 0.15 && constructionOpacity > 0.1
         packets[i]!.position.copy(
           paths[Math.floor(i / 3)]!.getPoint((t * 0.14 + (i % 3) / 3) % 1),
         )
       }
-      // The SVG fluid mask clips the actual scene, not just its background.
-      // A rectangular scissor here would cut the swelling edge back to a box.
-      if (inFrame) renderer.render(processScene, processCamera)
-      else {
-        const clipTop = Math.max(0, sceneTop + top)
-        const clipBottom = Math.min(height, sceneTop + height - bottom)
-        if (clipBottom > clipTop) {
-          renderer.setScissor(
-            left,
-            height - clipBottom,
-            width - left - right,
-            clipBottom - clipTop,
-          )
-          renderer.setScissorTest(true)
-          renderer.render(processScene, processCamera)
-          renderer.setScissorTest(false)
-        }
-      }
+      // A single rendered surface grows out from the line-contact point.
+      processWindow.render(
+        processScene,
+        processCamera,
+        focus,
+        sceneTop - viewportTop,
+      )
       if (inFrame) {
-        const entry = screen(width * 0.88, height * 0.76)
+        const entry = screen(
+          width * (mobile ? 0.1 : 0.51),
+          height * (mobile ? 0.42 : 0.16),
+        )
         const routePoint = paths[0]!.getPoint(
           0.22 + motion.plan * 0.2 + motion.build * 0.25,
         )
         routePoint.y += motion.build * 2.3
         const destination = world.localToWorld(routePoint)
+        destination.lerp(
+          world.localToWorld(new THREE.Vector3(2.4, 2.6, 0.6)),
+          completion,
+        )
         orb.position.copy(entry).lerp(destination, focus)
         orb.scale.setScalar(THREE.MathUtils.lerp(pathSize, scale * 0.45, focus))
         if (p > 0.92) {
@@ -593,15 +829,19 @@ export function createProcessExperience(
         }
       }
     }
-    const handoff = orbContinuity.closing
-    if (!inFrame && handoff && closing.getBoundingClientRect().top <= 1) {
-      const target = screen(handoff.x, handoff.y)
-      orb.position.lerp(target, handoff.blend)
+    const closingHandoff = orbContinuity.closing
+    if (
+      !inFrame &&
+      closingHandoff &&
+      closing.getBoundingClientRect().top <= 1
+    ) {
+      const target = screen(closingHandoff.x, closingHandoff.y)
+      orb.position.lerp(target, closingHandoff.blend)
       orb.scale.setScalar(
         THREE.MathUtils.lerp(
           pathSize,
-          (handoff.radius * unit()) / 0.64,
-          handoff.blend,
+          (closingHandoff.radius * unit()) / 0.64,
+          closingHandoff.blend,
         ),
       )
     }
@@ -640,6 +880,7 @@ export function createProcessExperience(
       orbContinuity.inClosing = false
     }
     cancelAnimationFrame(animation)
+    cancelAnimationFrame(layoutFrame)
     resize.disconnect()
     intersection.disconnect()
     window.removeEventListener('pointermove', pointerMove)
@@ -649,7 +890,16 @@ export function createProcessExperience(
     heroAnchor.removeEventListener('pointercancel', up)
     heroAnchor.removeEventListener('lostpointercapture', up)
     heroAnchor.removeEventListener('keydown', key)
+    productControl.removeEventListener('pointerdown', productDown)
+    productControl.removeEventListener('pointermove', productMove)
+    productControl.removeEventListener('pointerup', productUp)
+    productControl.removeEventListener('pointercancel', productUp)
+    productControl.removeEventListener('lostpointercapture', productUp)
+    productControl.removeEventListener('keydown', productKey)
     developer.dispose()
+    processWindow.dispose()
+    finished.dispose()
+    flightSvg.remove()
     const geometries = new Set<THREE.BufferGeometry>(),
       materials = new Set<THREE.Material>()
     for (const scene of [heroScene, orbScene, processScene])

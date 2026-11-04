@@ -2,10 +2,11 @@
   import { onMount } from 'svelte'
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
-  import FluidReveal from './FluidReveal.svelte'
   import { processProgress } from '../lib/process-progress'
   let section: HTMLElement
   let progress = $state(0)
+  let productView = $state('overview')
+  let productSide = $state('front')
   const motion = $derived(processProgress(progress))
   const chapters = [
     {
@@ -51,8 +52,13 @@
           .closest<HTMLElement>('.page-line-flow')
           ?.style.setProperty(
             '--process-thread-opacity',
-            String(processProgress(progress).lineOpacity),
+            String(
+              section.getBoundingClientRect().bottom <= innerHeight + 1
+                ? 1
+                : processProgress(progress).lineOpacity,
+            ),
           )
+        window.dispatchEvent(new Event('process-progress'))
       },
     })
     ScrollTrigger.refresh()
@@ -67,13 +73,14 @@
   id="process"
   class="process-journey"
   bind:this={section}
+  data-product-view={productView}
+  data-product-side={productSide}
   aria-label="My freelance process: understand, plan, build, and launch"
 >
   <div
     class="process-sticky"
     style={`--process-focus:${motion.focus};--process-intro:${motion.introOpacity}`}
   >
-    <FluidReveal progress={motion.focus} />
     <div class="process-frame">
       <div class="process-fallback" aria-hidden="true">
         <i></i><i></i><i></i><b></b>
@@ -91,6 +98,41 @@
         <h2>{chapters[motion.chapter]!.title}</h2>
         <p>{chapters[motion.chapter]!.description}</p>{/key}
     </div>
+    <div
+      data-product-rotate
+      class="product-rotate"
+      class:active={progress > 0.74}
+      role="slider"
+      tabindex={progress > 0.74 ? 0 : -1}
+      aria-label="Rotate the finished digital product. Drag or use left and right arrows. Home resets the view."
+      aria-valuenow="0"
+      aria-valuemin="-360"
+      aria-valuemax="360"
+      aria-orientation="horizontal"
+    ></div>
+    {#if progress > 0.83}
+      <div class="product-controls" aria-label="Explore the finished product">
+        <div class="product-views">
+          {#each ['overview', 'requests', 'analytics'] as view}
+            <button
+              class:current={productView === view}
+              aria-pressed={productView === view}
+              onclick={() => (productView = view)}>{view}</button
+            >
+          {/each}
+        </div>
+        <button
+          class="product-system"
+          aria-pressed={productSide === 'system'}
+          onclick={() =>
+            (productSide = productSide === 'front' ? 'system' : 'front')}
+          >{productSide === 'front'
+            ? 'See the system ↗'
+            : 'See the product ↗'}</button
+        >
+        <span>Drag to rotate ↔</span>
+      </div>
+    {/if}
     <ol class="process-steps" aria-label="Process chapters">
       <li class:current={motion.chapter === 0}>Understand</li>
       <li class:current={motion.chapter === 1}>Plan</li>
