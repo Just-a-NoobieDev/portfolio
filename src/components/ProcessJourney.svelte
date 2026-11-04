@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import gsap from 'gsap'
   import { ScrollTrigger } from 'gsap/ScrollTrigger'
+  import FluidReveal from './FluidReveal.svelte'
   import { processProgress } from '../lib/process-progress'
   let section: HTMLElement
   let progress = $state(0)
@@ -72,6 +73,7 @@
     class="process-sticky"
     style={`--process-focus:${motion.focus};--process-intro:${motion.introOpacity}`}
   >
+    <FluidReveal progress={motion.focus} />
     <div class="process-frame">
       <div class="process-fallback" aria-hidden="true">
         <i></i><i></i><i></i><b></b>

@@ -158,3 +158,13 @@ test('a pinned process cannot reveal a later Work line early or cause a jump at 
     previous = current
   }
 })
+
+test('the line head stays at the preview until the liquid front has covered it', () => {
+  const draw = (p) =>
+    storyDrawProgress(1000 + p * 5000, 0, 1000, 6000, 9000, 0.2, 0.65)
+  assert.equal(draw(0), 0.2)
+  assert.equal(draw(0.04), 0.2)
+  assert.equal(draw(0.085), 0.2)
+  assert.ok(draw(0.1) > 0.2)
+  assert.equal(draw(1), 0.65)
+})

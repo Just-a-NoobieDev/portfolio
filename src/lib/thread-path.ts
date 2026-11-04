@@ -99,7 +99,12 @@ export function storyDrawProgress(
     return (
       arrival +
       (departure - arrival) *
-        clamp((scroll - processStart) / Math.max(1, processEnd - processStart))
+        // Hold the head at the window until the blue wave covers the line.
+        clamp(
+          ((scroll - processStart) / Math.max(1, processEnd - processStart) -
+            0.085) /
+            0.915,
+        )
     )
   return (
     departure +

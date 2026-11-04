@@ -555,18 +555,23 @@ export function createProcessExperience(
           paths[Math.floor(i / 3)]!.getPoint((t * 0.14 + (i % 3) / 3) % 1),
         )
       }
-      const clipTop = Math.max(0, sceneTop + top),
-        clipBottom = Math.min(height, sceneTop + height - bottom)
-      if (clipBottom > clipTop) {
-        renderer.setScissor(
-          left,
-          height - clipBottom,
-          width - left - right,
-          clipBottom - clipTop,
-        )
-        renderer.setScissorTest(true)
-        renderer.render(processScene, processCamera)
-        renderer.setScissorTest(false)
+      // The SVG fluid mask clips the actual scene, not just its background.
+      // A rectangular scissor here would cut the swelling edge back to a box.
+      if (inFrame) renderer.render(processScene, processCamera)
+      else {
+        const clipTop = Math.max(0, sceneTop + top)
+        const clipBottom = Math.min(height, sceneTop + height - bottom)
+        if (clipBottom > clipTop) {
+          renderer.setScissor(
+            left,
+            height - clipBottom,
+            width - left - right,
+            clipBottom - clipTop,
+          )
+          renderer.setScissorTest(true)
+          renderer.render(processScene, processCamera)
+          renderer.setScissorTest(false)
+        }
       }
       if (inFrame) {
         const entry = screen(width * 0.88, height * 0.76)

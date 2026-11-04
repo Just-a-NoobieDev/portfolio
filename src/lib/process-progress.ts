@@ -10,8 +10,8 @@ export function processProgress(value: number) {
     plan: smooth(0.24, 0.43, progress),
     build: smooth(0.43, 0.7, progress),
     launch: smooth(0.72, 0.96, progress),
-    introOpacity: 1 - smooth(0, 0.035, progress),
-    lineOpacity: 1 - smooth(0, 0.025, progress) + smooth(0.96, 1, progress),
+    introOpacity: 1 - smooth(0.17, 0.24, progress),
+    lineOpacity: 1 - smooth(0.035, 0.085, progress) + smooth(0.96, 1, progress),
     chapter:
       progress < 0.27 ? 0 : progress < 0.46 ? 1 : progress < 0.73 ? 2 : 3,
   }

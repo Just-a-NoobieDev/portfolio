@@ -13,10 +13,13 @@ const { processProgress } = await import(
   `data:text/javascript;base64,${Buffer.from(outputText).toString('base64')}`
 )
 
-test('the process clears the incoming line before expansion and restores it for Work', () => {
+test('the line reaches the preview and yields to the fluid front before restoring for Work', () => {
   assert.equal(processProgress(0).lineOpacity, 1)
-  assert.equal(processProgress(0.035).lineOpacity, 0)
-  assert.equal(processProgress(0.035).introOpacity, 0)
+  assert.equal(processProgress(0.035).lineOpacity, 1)
+  assert.ok(processProgress(0.06).lineOpacity > 0)
+  assert.equal(processProgress(0.085).lineOpacity, 0)
+  assert.equal(processProgress(0.035).introOpacity, 1)
+  assert.equal(processProgress(0.24).introOpacity, 0)
   assert.equal(processProgress(0.035).focus, 0)
   assert.equal(processProgress(0.24).focus, 1)
   assert.equal(processProgress(0.8).lineOpacity, 0)

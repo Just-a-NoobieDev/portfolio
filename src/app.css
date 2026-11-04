@@ -3243,13 +3243,8 @@ a:focus-visible .rolling > span {
     #e9edf7 50%,
     #f0f1f4 90%
   );
-  clip-path: inset(
-    calc((1 - var(--process-focus, 0)) * 16%)
-      calc((1 - var(--process-focus, 0)) * 5%)
-      calc((1 - var(--process-focus, 0)) * 12%)
-      calc((1 - var(--process-focus, 0)) * 47%) round
-      calc((1 - var(--process-focus, 0)) * 24px)
-  );
+  clip-path: url(#process-liquid-window);
+  z-index: 2;
   will-change: clip-path;
 }
 .process-copy {
@@ -3261,6 +3256,7 @@ a:focus-visible .rolling > span {
   pointer-events: none;
 }
 .process-copy.process-intro {
+  z-index: 0;
   top: 22%;
   width: 40%;
   opacity: var(--process-intro, 1);
@@ -3377,15 +3373,6 @@ a:focus-visible .rolling > span {
 @media (max-width: 760px) {
   .process-journey {
     height: 580svh;
-  }
-  .process-frame {
-    clip-path: inset(
-      calc((1 - var(--process-focus, 0)) * 42%)
-        calc((1 - var(--process-focus, 0)) * 6%)
-        calc((1 - var(--process-focus, 0)) * 8%)
-        calc((1 - var(--process-focus, 0)) * 6%) round
-        calc((1 - var(--process-focus, 0)) * 18px)
-    );
   }
   .process-copy,
   .process-copy.process-intro {
