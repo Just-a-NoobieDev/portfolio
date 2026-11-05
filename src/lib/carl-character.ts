@@ -532,6 +532,8 @@ export function createCarlCharacter() {
       walk: number,
       catching: number,
       waving: number,
+      reaching = catching,
+      releasing = 0,
     ): void {
       this.animate(time, 0.5)
       chair.visible = false
@@ -560,15 +562,38 @@ export function createCarlCharacter() {
         leg.ankle.position.z += stride * 0.2
         leg.ankle.position.y += lift
       }
+      // The pocket pose has bent elbows and hands tucked against the hips.
+      // Only the carrying hand comes out for the catch; the other leaves its
+      // pocket naturally with the walk and becomes the final greeting hand.
+      person.rotation.z = Math.sin(time * 6) * walk * 0.025
+      torso.scale.y = 1 + Math.sin(time * 1.5) * 0.004
       for (const arm of arms) {
         const isCarry = arm.sign < 0
-        const elbow = isCarry
-          ? point(-0.55, 0.25 + catching * 0.2, -0.22)
-          : point(0.55, 0.06, -0.48).lerp(point(0.67, 0.76, -0.48), waving)
-        const wrist = isCarry
-          ? point(-0.65, 0.72, 0.35).lerp(point(-0.4, 0.48, 0.2), catching)
-          : point(0.42, -0.26, -0.32).lerp(point(0.5, 1.26, -0.34), waving)
-        if (!isCarry) wrist.z += Math.sin(time * 6) * walk * 0.12
+        const pocketElbow = point(arm.sign * 0.5, 0.02, -0.59)
+        const pocketWrist = point(arm.sign * 0.31, -0.39, -0.43)
+        const handOut = isCarry ? reaching : Math.max(walk, waving)
+        const elbow = pocketElbow.clone()
+        const wrist = pocketWrist.clone()
+        if (isCarry) {
+          elbow.lerp(point(-0.55, 0.3, -0.28), reaching)
+          wrist.lerp(point(-0.62, 0.62, 0.18), reaching)
+          elbow.lerp(point(-0.49, 0.14, -0.32), catching * (1 - releasing))
+          wrist.lerp(point(-0.4, 0.34, 0.14), catching * (1 - releasing))
+          elbow.lerp(point(-0.6, 0.36, -0.24), releasing)
+          wrist.lerp(point(-0.58, 0.65, 0.23), releasing)
+          // Settle the empty arm once the orb has joined the network.
+          elbow.lerp(point(-0.46, 0, -0.46), waving)
+          wrist.lerp(point(-0.44, -0.3, -0.4), waving)
+        } else {
+          elbow.lerp(point(0.47, 0.02, -0.47), walk)
+          wrist.lerp(point(0.44, -0.28, -0.35), walk)
+          wrist.z += Math.sin(time * 6 + Math.PI) * walk * 0.19
+          elbow.lerp(point(0.65, 0.7, -0.4), waving)
+          wrist.lerp(
+            point(0.61 + Math.sin(time * 4.5) * 0.12, 1.13, -0.25),
+            waving,
+          )
+        }
         segment(arm.upper, arm.shoulder, elbow, arm.upperLength)
         segment(arm.lower, elbow, wrist, arm.lowerLength)
         segment(
@@ -577,11 +602,12 @@ export function createCarlCharacter() {
           elbow.clone().lerp(wrist, 0.17),
           arm.cuffLength,
         )
+        arm.hand.visible = handOut > 0.12
         arm.hand.position.copy(wrist)
         arm.hand.rotation.set(
-          isCarry ? -0.3 : -1.3 * waving,
+          isCarry ? -0.3 * reaching : -1.3 * waving,
           0,
-          isCarry ? 0.12 : Math.sin(time * 5.5) * 0.35 * waving,
+          isCarry ? 0.12 * reaching : Math.sin(time * 4.5) * 0.3 * waving,
         )
       }
     },

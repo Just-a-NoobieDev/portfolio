@@ -77,15 +77,19 @@ export function createConnectionJourney(
     slats.push(slat)
   }
   const railCurves: THREE.CatmullRomCurve3[] = []
+  const rails: THREE.Mesh<THREE.TubeGeometry>[] = []
   for (const direction of [-1, 1]) {
     const points = Array.from({ length: 50 }, (_, i) =>
       bridgePoint(i / 49).add(new THREE.Vector3(direction * 1.65, 0.25, 0)),
     )
     const curve = new THREE.CatmullRomCurve3(points)
     railCurves.push(curve)
-    structure.add(
-      new THREE.Mesh(new THREE.TubeGeometry(curve, 100, 0.018, 6, false), glow),
+    const rail = new THREE.Mesh(
+      new THREE.TubeGeometry(curve, 100, 0.018, 6, false),
+      glow,
     )
+    rails.push(rail)
+    structure.add(rail)
   }
   const spineCurve = new THREE.CatmullRomCurve3(
     Array.from({ length: 60 }, (_, i) =>
@@ -137,7 +141,7 @@ export function createConnectionJourney(
     packets.push(dot)
   }
   const constellation = new THREE.Group()
-  constellation.position.set(0, 0.5, -42)
+  constellation.position.set(0, 0.5, -25)
   structure.add(constellation)
   const networkMaterial = new THREE.LineBasicMaterial({
     color: '#6f9bff',
@@ -174,6 +178,15 @@ export function createConnectionJourney(
     new THREE.Float32BufferAttribute(networkPositions, 3),
   )
   constellation.add(new THREE.LineSegments(networkGeometry, networkMaterial))
+  const receiver = new THREE.Mesh(new THREE.IcosahedronGeometry(0.12, 2), blue)
+  receiver.position.set(1.6, 0.9, 1)
+  constellation.add(receiver)
+  const receiverLinks = new THREE.BufferGeometry().setFromPoints(
+    networkPoints
+      .filter((_, i) => i % 7 === 0)
+      .flatMap((point) => [receiver.position.clone(), point]),
+  )
+  constellation.add(new THREE.LineSegments(receiverLinks, networkMaterial))
   const stars = new Float32Array(420 * 3)
   for (let i = 0; i < 420; i++) {
     stars[i * 3] = Math.sin(i * 127.1) * 17
@@ -276,95 +289,113 @@ export function createConnectionJourney(
     const choreography = journeyProgress(progress)
     const travel = choreography.travel
     const passage = choreography.passage
-    const form = smooth(0.03, 0.55, travel),
-      open = smooth(0.45, 0.8, travel)
+    const build = choreography.build
+    // Nothing behind Carl exists in the waiting view. The bridge is revealed
+    // from his feet forward only after the orb is safely in his hand.
     slats.forEach((slat, i) => {
-      const fraction = i / (total - 1),
-        base = bridgePoint(fraction)
-      const localForm = smooth(fraction - 0.22, fraction - 0.05, travel)
+      const fraction = i / (total - 1)
+      const localForm = smooth(fraction * 0.82, fraction * 0.82 + 0.12, build)
       slat.visible = localForm > 0.001
-      const scatter = 1 - localForm
-      slat.position
-        .copy(base)
-        .add(
-          new THREE.Vector3(
-            Math.sin(i * 2.3) * scatter * 1.5,
-            Math.cos(i * 1.7) * scatter * 1.6,
-            Math.sin(i) * scatter * 0.5,
-          ),
-        )
-      slat.rotation.set(
-        scatter * ((i % 3) - 1) * 1.6,
-        Math.cos(fraction * Math.PI) * -0.14 + scatter * 0.8,
-        Math.sin(i * 1.4) * scatter * 1.5,
-      )
+      slat.position.copy(bridgePoint(fraction))
+      slat.position.y -= (1 - localForm) * 0.85
+      slat.scale.y = Math.max(0.001, localForm)
+      slat.rotation.set(0, Math.cos(fraction * Math.PI) * -0.14, 0)
     })
+    for (const rail of [...rails, spine]) {
+      rail.visible = build > 0.001
+      const count = rail.geometry.index!.count
+      rail.geometry.setDrawRange(0, Math.floor((count * build) / 36) * 36)
+    }
+    gate.visible = build > 0.62
+    gate.scale.setScalar(Math.max(0.001, smooth(0.62, 1, build)))
+    gateHalves.forEach((half) => {
+      half.position.set(0, 0, 0)
+      half.rotation.set(0, 0, 0)
+    })
+    floor.visible = false
+    dust.visible = choreography.catch > 0.999
     const actorPosition = bridgePoint(0.03 + travel * 0.9)
     carl.group.position.copy(actorPosition).add(new THREE.Vector3(0, 1.18, 0))
     carl.group.rotation.y =
       Math.PI * choreography.turn + Math.PI * choreography.greet
     const walking =
-      smooth(0.27, 0.34, progress) * (1 - smooth(0.78, 0.88, progress))
-    // Stride advances only while scrolling along the bridge; the final wave stays live.
+      smooth(0.35, 0.39, progress) * (1 - smooth(0.75, 0.79, progress))
+    // Distance drives steps, so pausing the scroll pauses the walk. The final
+    // wave uses the live clock and keeps moving at the end of the journey.
     carl.animateJourney(
-      travel * 42,
+      choreography.greet > 0 ? time : travel * 42,
       walking,
       choreography.catch,
       choreography.greet,
+      choreography.reach,
+      choreography.release,
     )
-    if (choreography.greet > 0)
-      carl.animateJourney(time, 0, 1, choreography.greet)
+    structure.position.set(0, 0, 0)
+    constellation.visible = passage > 0.001
+    constellation.scale.setScalar(1)
+    constellation.rotation.set(0, 0, 0)
+    networkMaterial.opacity = passage * 0.4
+    networkNodes.forEach((node, i) =>
+      node.scale.setScalar(0.5 + passage * 0.7 + Math.sin(time + i) * 0.08),
+    )
     structure.updateMatrixWorld(true)
-    const palmWorld = carl.carryAnchor.getWorldPosition(new THREE.Vector3())
-    signal.position.copy(structure.worldToLocal(palmWorld.clone()))
+    const palm = structure.worldToLocal(
+      carl.carryAnchor.getWorldPosition(new THREE.Vector3()),
+    )
+    // Before the reach, the destination waits above the left hip, inside the
+    // box. After catching, it is attached to the real hand until the release.
+    const arrival = actorPosition
+      .clone()
+      .add(new THREE.Vector3(-0.44, 1.8, 0.24))
+    signal.position.copy(arrival).lerp(palm, choreography.reach)
+    const destination = structure.worldToLocal(
+      receiver.getWorldPosition(new THREE.Vector3()),
+    )
+    signal.position.lerp(destination, choreography.release)
+    signal.position.y += Math.sin(choreography.release * Math.PI) * 0.6
     signal.scale.setScalar(0.48)
+    receiver.visible = choreography.release < 0.999
     ball.rotation.set(time * 0.18, time * 0.3, 0)
     shell.rotation.set(time * 0.4, time * 0.2, 0.3)
-    gateHalves.forEach((half, i) => {
-      const direction = i === 0 ? -1 : 1
-      half.position.x = direction * (1 - form) * 2.5
-      half.rotation.y = direction * (1 - form) * 0.6
-      half.rotation.z = direction * (1 - form) * 0.2
-    })
-    gate.rotation.z = Math.sin(time * 0.22) * 0.025
+    gate.rotation.z = 0
     packets.forEach((packet, i) => {
-      const curve = railCurves[i % 2]!
-      packet.position.copy(curve.getPoint((time * 0.07 + i / 14) % 1))
-      packet.scale.setScalar(0.3 + form * 0.7)
+      const fraction = (time * 0.045 + i / 14) % 1
+      packet.visible = build > fraction + 0.1
+      packet.position.copy(railCurves[i % 2]!.getPoint(fraction))
+      packet.scale.setScalar(0.65)
     })
     const mobile = camera.aspect < 1
     camera.position.set(
-      (mobile ? 2.4 : 4.5) * (1 - travel) + pointerX * 0.5,
-      (mobile ? 3.5 : 3) - travel * 1.15 + pointerY * 0.25,
-      14 - travel * 26,
+      actorPosition.x + 1.1 * travel + pointerX * 0.18,
+      1.2 + pointerY * 0.12,
+      actorPosition.z + (mobile ? 9.8 : 7.8) + choreography.release * 1.5,
     )
-    camera.lookAt(
-      signal.position.x * 0.4,
-      -0.2 + open * 0.5,
-      signal.position.z - (1 - choreography.greet) * 3,
+    camera.lookAt(actorPosition.x, 0.1, actorPosition.z - 0.4)
+    // The canvas fills the viewport while its mask is initially a right-hand
+    // box. Offset the projection to center Carl inside that box, not offscreen.
+    camera.setViewOffset(
+      host.clientWidth,
+      host.clientHeight,
+      -host.clientWidth *
+        (mobile ? 0 : THREE.MathUtils.lerp(0.21, 0.16, choreography.focus)),
+      mobile ? -host.clientHeight * 0.12 * (1 - choreography.focus) : 0,
+      host.clientWidth,
+      host.clientHeight,
     )
     scene.updateMatrixWorld(true)
     const gazeTarget =
-      choreography.turn < 0.5 || choreography.greet > 0.5
-        ? camera.position.clone()
-        : gate.getWorldPosition(new THREE.Vector3())
+      choreography.reach > 0.05 && choreography.turn < 0.5
+        ? signal.getWorldPosition(new THREE.Vector3())
+        : choreography.greet > 0.5
+          ? camera.position.clone()
+          : gate.getWorldPosition(new THREE.Vector3())
+    if (choreography.reach < 0.05) gazeTarget.copy(camera.position)
     carl.lookAtOrb(gazeTarget, dt)
     dust.rotation.y = time * 0.008
-    structure.position.x = mobile
-      ? 0
-      : 1.5 * (1 - open) + (1 - choreography.focus) * 3
-    constellation.visible = passage > 0.01
-    constellation.rotation.y = time * 0.035 + passage * 0.3
-    constellation.rotation.z = Math.sin(time * 0.15) * 0.04
-    constellation.scale.setScalar(0.65 + passage * 0.35)
-    networkMaterial.opacity = passage * 0.36
-    networkNodes.forEach((node, i) =>
-      node.scale.setScalar(0.5 + passage * 0.7 + Math.sin(time + i) * 0.12),
-    )
     // Project the destination into page coordinates while the line orb arrives.
     // Once matched, move that exact mesh into this scene instead of showing a duplicate.
-    ball.visible = !orbContinuity.orb
-    shell.visible = !orbContinuity.orb
+    ball.visible = !orbContinuity.orb && choreography.catch > 0.01
+    shell.visible = !orbContinuity.orb && choreography.catch > 0.01
     if (orbContinuity.orb) {
       scene.updateMatrixWorld(true)
       camera.updateMatrixWorld()

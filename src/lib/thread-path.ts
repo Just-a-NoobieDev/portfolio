@@ -82,7 +82,8 @@ export function storyThreadPath(
     ' ' +
     workCurve(w, workHeight, workBottom - processBottom, processBottom, h) +
     ' ' +
-    entryCurve(w, v, closingTop, workHeight)
+    // End at the window entrance; the shared orb then travels to Carl's palm.
+    `C${w * 0.19} ${closingTop + workHeight * 0.04} ${w * 0.12} ${closingTop + v * 0.28} ${w * 0.32} ${closingTop + v * 0.36} C${w * 0.52} ${closingTop + v * 0.44} ${w * (mobile ? 0.14 : 0.44)} ${closingTop + v * (mobile ? 0.57 : 0.44)} ${w * (mobile ? 0.12 : 0.48)} ${closingTop + v * (mobile ? 0.65 : 0.45)}`
   return { before, through, path }
 }
 

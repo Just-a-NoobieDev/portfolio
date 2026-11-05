@@ -16,13 +16,13 @@ const { journeyProgress } = await import(
 test('the view expands before the bridge and camera journey develop', () => {
   assert.equal(journeyProgress(0).focus, 0)
   assert.equal(journeyProgress(0.1).travel, 0)
-  assert.equal(journeyProgress(0.24).focus, 1)
+  assert.equal(journeyProgress(0.25).focus, 1)
   assert.ok(journeyProgress(0.22).travel < 0.01)
   assert.equal(journeyProgress(0.22).passage, 0)
 })
 test('the journey reaches four chapters and ends beyond the gateway', () => {
   assert.deepEqual(
-    [0, 0.3, 0.6, 0.9].map((p) => journeyProgress(p).chapter),
+    [0, 0.3, 0.6, 0.95].map((p) => journeyProgress(p).chapter),
     [0, 1, 2, 3],
   )
   assert.equal(journeyProgress(1).travel, 1)
@@ -31,12 +31,12 @@ test('the journey reaches four chapters and ends beyond the gateway', () => {
 })
 test('view expansion and camera movement stay continuous across chapter boundaries', () => {
   let previous = journeyProgress(0)
-  for (let i = 1; i <= 1000; i++) {
-    const p = i / 1000,
+  for (let i = 1; i <= 10000; i++) {
+    const p = i / 10000,
       current = journeyProgress(p)
     for (const key of ['focus', 'travel', 'passage']) {
       assert.ok(current[key] >= previous[key])
-      assert.ok(current[key] - previous[key] < 0.01)
+      assert.ok(current[key] - previous[key] < 0.002)
     }
     previous = current
   }
@@ -54,10 +54,28 @@ test('the incoming line and preview copy clear before dark expansion starts', ()
   }
 })
 
-test('catch precedes expansion, exploration precedes the final wave', () => {
-  assert.equal(journeyProgress(0.08).catch, 1)
-  assert.equal(journeyProgress(0.08).focus, 0)
-  assert.equal(journeyProgress(0.24).travel, 0)
-  assert.equal(journeyProgress(0.78).greet, 0)
+test('Carl waits, catches before construction, and releases before waving', () => {
+  const waiting = journeyProgress(0)
+  for (const key of [
+    'reach',
+    'catch',
+    'build',
+    'turn',
+    'travel',
+    'release',
+    'greet',
+  ])
+    assert.equal(waiting[key], 0)
+  for (let i = 0; i <= 1000; i++) {
+    const state = journeyProgress(i / 1000)
+    if (state.build > 0 || state.focus > 0) assert.equal(state.catch, 1)
+    if (state.travel > 0) {
+      assert.equal(state.turn, 1)
+      assert.equal(state.focus, 1)
+      assert.ok(state.build > 0)
+    }
+    if (state.release > 0) assert.equal(state.travel, 1)
+    if (state.greet > 0) assert.equal(state.release, 1)
+  }
   assert.equal(journeyProgress(1).greet, 1)
 })

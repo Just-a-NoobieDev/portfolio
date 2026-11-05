@@ -76,7 +76,8 @@
             },
             () => progress,
           )
-        } catch {
+        } catch (error) {
+          console.error('Closing scene could not initialize', error)
           ready = false
         }
       },
@@ -111,7 +112,7 @@
         class="connection-scene"
         bind:this={canvasHost}
         role="img"
-        aria-label="Carl catches the incoming orb, walks along an assembling bridge into a glowing ring, turns toward you and waves while holding the orb"
+        aria-label="Carl waits with his hands in his pockets, catches the incoming orb, walks the newly forming path, releases the orb into the network, and turns back to wave"
       >
         <div class="connection-fallback" aria-hidden="true"><i></i><b></b></div>
       </div>

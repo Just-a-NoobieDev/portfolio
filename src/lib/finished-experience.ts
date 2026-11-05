@@ -230,6 +230,7 @@ export function createFinishedExperience() {
       textures.push(texture)
       const material = new THREE.MeshBasicMaterial({
         map: texture,
+        depthWrite: false,
         transparent: true,
         opacity: 0,
       })
@@ -265,6 +266,7 @@ export function createFinishedExperience() {
     textures.push(texture)
     const material = new THREE.MeshBasicMaterial({
       map: texture,
+      depthWrite: false,
       transparent: true,
       opacity: 0,
     })

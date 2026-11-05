@@ -289,6 +289,7 @@ export function createProcessExperience(
       new THREE.TubeGeometry(path, 60, 0.017, 6, false),
       new THREE.MeshBasicMaterial({
         color: '#4067ff',
+        depthWrite: false,
         transparent: true,
         opacity: 0.6,
       }),
@@ -485,6 +486,9 @@ export function createProcessExperience(
   resize.observe(heroSection)
   resize.observe(section)
   resize.observe(closing)
+  // Pin spacing and asynchronously sized work previews can move the closing
+  // scene without resizing it. Keep the shared orb canvas over the whole story.
+  resize.observe(story)
   const intersection = new IntersectionObserver(([entry]) => {
     visible = !!entry?.isIntersecting
   })
@@ -785,7 +789,7 @@ export function createProcessExperience(
       scan.visible = motion.launch > 0 && motion.launch < 0.95
       scan.position.y = -1.5 + motion.launch * 3.2
       for (let i = 0; i < tubes.length; i++) {
-        tubes[i]!.visible = motion.build > 0.45
+        tubes[i]!.visible = motion.build > 0.45 && constructionOpacity > 0.001
         ;(tubes[i]!.material as THREE.MeshBasicMaterial).opacity =
           motion.build * 0.5 * constructionOpacity
       }
