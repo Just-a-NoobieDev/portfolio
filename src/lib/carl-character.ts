@@ -615,7 +615,11 @@ export function createCarlCharacter() {
       arms[0]!.wrist.copy(left)
       arms[1]!.wrist.copy(right)
     },
-    lookAtOrb(target: THREE.Vector3, delta: number) {
+    lookAtOrb(
+      target: THREE.Vector3,
+      delta: number,
+      limits = { yaw: 0.32, up: 0.18, down: 0.22 },
+    ) {
       person.updateWorldMatrix(true, false)
       const local = person
         .worldToLocal(target.clone())
@@ -623,13 +627,13 @@ export function createCarlCharacter() {
         .sub(new THREE.Vector3(0, 0.36, 0.04))
       const yaw = THREE.MathUtils.clamp(
         Math.atan2(local.x, local.z),
-        -0.32,
-        0.32,
+        -limits.yaw,
+        limits.yaw,
       )
       const pitch = THREE.MathUtils.clamp(
         -Math.atan2(local.y, Math.hypot(local.x, local.z)),
-        -0.18,
-        0.22,
+        -limits.up,
+        limits.down,
       )
       neckPivot.rotation.y = THREE.MathUtils.damp(
         neckPivot.rotation.y,

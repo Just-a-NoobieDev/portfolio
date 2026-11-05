@@ -6,5 +6,6 @@ export const orbContinuity: {
   orb?: Group
   home?: Object3D
   inClosing: boolean
+  viewport?: { x: number; y: number }
   closing?: { x: number; y: number; radius: number; blend: number }
 } = { inClosing: false }

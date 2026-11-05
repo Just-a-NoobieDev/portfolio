@@ -854,7 +854,13 @@ export function createProcessExperience(
     const projectedOrb = orb
       .getWorldPosition(new THREE.Vector3())
       .project(inFrame ? processCamera : camera)
-    layer.dataset.orbX = String(Math.round(((projectedOrb.x + 1) / 2) * width))
+    orbContinuity.viewport = {
+      x: ((projectedOrb.x + 1) / 2) * width,
+      y:
+        ((1 - projectedOrb.y) / 2) * height +
+        (inFrame ? rect.top : viewportTop),
+    }
+    layer.dataset.orbX = String(Math.round(orbContinuity.viewport.x))
     layer.dataset.orbY = String(
       Math.round(
         ((1 - projectedOrb.y) / 2) * height +
@@ -881,6 +887,7 @@ export function createProcessExperience(
       orbContinuity.orb = undefined
       orbContinuity.home = undefined
       orbContinuity.closing = undefined
+      orbContinuity.viewport = undefined
       orbContinuity.inClosing = false
     }
     cancelAnimationFrame(animation)

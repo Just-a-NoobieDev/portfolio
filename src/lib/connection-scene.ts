@@ -4,6 +4,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
 import { journeyProgress } from './journey-progress'
 import { createCarlCharacter } from './carl-character'
 import { orbContinuity } from './orb-continuity'
+import { visibleOrbTarget } from './orb-gaze'
 
 const clamp = (value: number) => THREE.MathUtils.clamp(value, 0, 1)
 const smooth = (a: number, b: number, value: number) =>
@@ -390,7 +391,25 @@ export function createConnectionJourney(
           ? camera.position.clone()
           : gate.getWorldPosition(new THREE.Vector3())
     if (choreography.reach < 0.05) gazeTarget.copy(camera.position)
-    carl.lookAtOrb(gazeTarget, dt)
+    // During the handoff the page renderer still owns the moving orb. Follow
+    // its rendered position, not the destination waiting above Carl's palm.
+    if (
+      choreography.reach >= 0.05 &&
+      choreography.catch < 0.999 &&
+      !orbContinuity.inClosing &&
+      orbContinuity.viewport
+    ) {
+      camera.updateMatrixWorld()
+      gazeTarget.copy(
+        visibleOrbTarget(
+          camera,
+          host.getBoundingClientRect(),
+          orbContinuity.viewport,
+          signal.getWorldPosition(new THREE.Vector3()),
+        ),
+      )
+    }
+    carl.lookAtOrb(gazeTarget, dt, { yaw: 0.55, up: 0.4, down: 0.3 })
     dust.rotation.y = time * 0.008
     // Project the destination into page coordinates while the line orb arrives.
     // Once matched, move that exact mesh into this scene instead of showing a duplicate.
