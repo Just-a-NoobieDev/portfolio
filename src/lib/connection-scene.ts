@@ -369,7 +369,7 @@ export function createConnectionJourney(
     camera.position.set(
       actorPosition.x + 1.1 * travel + pointerX * 0.18,
       1.2 + pointerY * 0.12,
-      actorPosition.z + (mobile ? 9.8 : 7.8) + choreography.release * 1.5,
+      actorPosition.z + 7.8 + choreography.release * 1.5,
     )
     camera.lookAt(actorPosition.x, 0.1, actorPosition.z - 0.4)
     // The canvas fills the viewport while its mask is initially a right-hand

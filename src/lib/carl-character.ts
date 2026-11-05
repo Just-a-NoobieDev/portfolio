@@ -581,9 +581,14 @@ export function createCarlCharacter() {
           wrist.lerp(point(-0.4, 0.34, 0.14), catching * (1 - releasing))
           elbow.lerp(point(-0.6, 0.36, -0.24), releasing)
           wrist.lerp(point(-0.58, 0.65, 0.23), releasing)
-          // Settle the empty arm once the orb has joined the network.
-          elbow.lerp(point(-0.46, 0, -0.46), waving)
-          wrist.lerp(point(-0.44, -0.3, -0.4), waving)
+          // The carrying palm settles as soon as the orb leaves it, before
+          // the opposite arm starts the greeting.
+          const emptyHand = Math.max(
+            waving,
+            THREE.MathUtils.smoothstep(releasing, 0.45, 1),
+          )
+          elbow.lerp(point(-0.46, 0, -0.46), emptyHand)
+          wrist.lerp(point(-0.44, -0.3, -0.4), emptyHand)
         } else {
           elbow.lerp(point(0.47, 0.02, -0.47), walk)
           wrist.lerp(point(0.44, -0.28, -0.35), walk)

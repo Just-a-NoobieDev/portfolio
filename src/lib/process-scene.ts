@@ -532,7 +532,7 @@ export function createProcessExperience(
     const anchor = heroAnchor.getBoundingClientRect()
     const heroScale =
       (Math.min(anchor.width, anchor.height) * unit()) /
-      (width <= 760 ? 4.7 : 4.2)
+      (width <= 760 ? 5.2 : 4.2)
     hero.position.copy(
       screen(
         anchor.left + anchor.width / 2 - (width <= 760 ? 0 : width * 0.04),
@@ -689,7 +689,7 @@ export function createProcessExperience(
       const bottom = (mobile ? 0.08 : 0.12) * (1 - focus) * height
       const scale =
         (mobile
-          ? (width * unit()) / 7.8
+          ? (width * unit()) / 6.5
           : Math.min(0.9, (width * unit()) / 13)) *
         (0.72 + focus * 0.28) *
         (1 + smooth(0.7, 0.93, p) * 0.15)

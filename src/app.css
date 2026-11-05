@@ -2960,8 +2960,8 @@ a:focus-visible .rolling > span {
     );
   }
   .connection-frame .connection-scene {
-    top: 25%;
-    height: 75%;
+    top: 0;
+    height: 100%;
   }
   .connection-heading.preview-copy h2 {
     font-size: 40px;
@@ -3092,13 +3092,13 @@ a:focus-visible .rolling > span {
 .scroll-thread path {
   fill: none;
   stroke: #3655ff;
-  stroke-width: 12px;
+  stroke-width: 18px;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .scroll-thread.thread-light path {
   stroke: #839bff;
-  stroke-width: 7px;
+  stroke-width: 18px;
   opacity: 0.5;
 }
 .signal-content {
@@ -3142,10 +3142,10 @@ a:focus-visible .rolling > span {
 }
 @media (max-width: 760px) {
   .scroll-thread path {
-    stroke-width: 5px;
+    stroke-width: 9px;
   }
   .scroll-thread.thread-light path {
-    stroke-width: 4px;
+    stroke-width: 9px;
   }
   .work-thread .selected-work {
     padding-bottom: 100px;
@@ -3492,12 +3492,12 @@ a:focus-visible .rolling > span {
 .hero-flight-thread path {
   fill: none;
   stroke: #3655ff;
-  stroke-width: 12px;
+  stroke-width: 18px;
   stroke-linecap: round;
 }
 @media (max-width: 760px) {
   .hero-flight-thread path {
-    stroke-width: 5px;
+    stroke-width: 9px;
   }
 }
 

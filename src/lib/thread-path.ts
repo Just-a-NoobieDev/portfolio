@@ -66,12 +66,16 @@ export function storyThreadPath(
     v = Math.max(1, viewport)
   const mobile = w <= 760
   const entryX = mobile ? 0.1 : 0.51
-  const intro = `M${w * 0.76} 0 C${w * 0.6} 0 ${w * 0.08} ${h * 0.14} ${w * 0.08} ${h * 0.37} C${w * 0.08} ${h * 0.6} ${w * entryX} ${h * 0.6} ${w * entryX} ${h * 0.82} C${w * entryX} ${h * 0.9} ${w * entryX} ${h * 0.93} ${w * entryX} ${h}`
+  const intro = mobile
+    ? `M${w * 0.76} 0 C${w * 0.6} 0 12 ${h * 0.04} 12 ${h * 0.1} C12 ${h * 0.16} 12 ${h * 0.7} 12 ${h}`
+    : `M${w * 0.76} 0 C${w * 0.6} 0 ${w * 0.08} ${h * 0.14} ${w * 0.08} ${h * 0.37} C${w * 0.08} ${h * 0.6} ${w * entryX} ${h * 0.6} ${w * entryX} ${h * 0.82} C${w * entryX} ${h * 0.9} ${w * entryX} ${h * 0.93} ${w * entryX} ${h}`
   const Y = (y: number) => processTop + y
   const contactY = v * (w <= 760 ? 0.42 : 0.16)
   const before =
     intro +
-    ` C${w * entryX} ${Y(h * 0.07)} ${w * entryX} ${Y(contactY - v * 0.08)} ${w * entryX} ${Y(contactY)}`
+    (mobile
+      ? ` C12 ${Y(contactY * 0.35)} 12 ${Y(contactY * 0.65)} ${w * entryX} ${Y(contactY * 0.8)} C${w * entryX + (w * entryX - 12)} ${Y(contactY * 0.95)} ${w * entryX} ${Y(contactY - v * 0.025)} ${w * entryX} ${Y(contactY)}`
+      : ` C${w * entryX} ${Y(h * 0.07)} ${w * entryX} ${Y(contactY - v * 0.08)} ${w * entryX} ${Y(contactY)}`)
   const through =
     before +
     ` C${w * entryX} ${Y(contactY + v * 0.08)} ${w * 0.71} ${processBottom - v * 0.4 - h * 0.07} ${w * 0.78} ${processBottom - v * 0.4}`
@@ -80,10 +84,20 @@ export function storyThreadPath(
     through +
     ` C${w * 0.85} ${processBottom - v * 0.4 + h * 0.07} ${w * (w <= 760 ? 0.78 : 0.77)} ${processBottom - h * 0.07} ${w * 0.84} ${processBottom}` +
     ' ' +
-    workCurve(w, workHeight, workBottom - processBottom, processBottom, h) +
+    (mobile
+      ? `C${w * 0.9} ${processBottom + h * 0.07} ${w * 0.975} ${processBottom + workHeight * 0.15} ${w * 0.975} ${processBottom + workHeight * 0.25} C${w * 0.975} ${processBottom + workHeight * 0.35} ${w * 0.975} ${processBottom + workHeight * 0.7} ${w * 0.975} ${processBottom + workHeight * 0.78} C${w * 0.975} ${processBottom + workHeight * 0.86} 12 ${processBottom + workHeight * 0.86} 12 ${processBottom + workHeight * 0.94} C12 ${processBottom + workHeight * 0.97} 12 ${processBottom + workHeight * 0.98} 12 ${closingTop}`
+      : workCurve(
+          w,
+          workHeight,
+          workBottom - processBottom,
+          processBottom,
+          h,
+        )) +
     ' ' +
     // End at the window entrance; the shared orb then travels to Carl's palm.
-    `C${w * 0.19} ${closingTop + workHeight * 0.04} ${w * 0.12} ${closingTop + v * 0.28} ${w * 0.32} ${closingTop + v * 0.36} C${w * 0.52} ${closingTop + v * 0.44} ${w * (mobile ? 0.14 : 0.44)} ${closingTop + v * (mobile ? 0.57 : 0.44)} ${w * (mobile ? 0.12 : 0.48)} ${closingTop + v * (mobile ? 0.65 : 0.45)}`
+    (mobile
+      ? `C12 ${closingTop + v * 0.06} 12 ${closingTop + v * 0.28} 12 ${closingTop + v * 0.36} C12 ${closingTop + v * 0.4} ${w * 0.12} ${closingTop + v * 0.41} ${w * 0.12} ${closingTop + v * 0.45}`
+      : `C${w * 0.19} ${closingTop + workHeight * 0.04} ${w * 0.12} ${closingTop + v * 0.28} ${w * 0.32} ${closingTop + v * 0.36} C${w * 0.52} ${closingTop + v * 0.44} ${w * (mobile ? 0.14 : 0.44)} ${closingTop + v * (mobile ? 0.57 : 0.44)} ${w * (mobile ? 0.12 : 0.48)} ${closingTop + v * (mobile ? 0.65 : 0.45)}`)
   return { before, through, path }
 }
 
